@@ -1,22 +1,13 @@
 {
-  "version": 2,
-  "name": "gujarat-innovation-hub",
-  "builds": [
+  "buildCommand": "npx expo export --platform web",
+  "outputDirectory": "dist",
+  "installCommand": "npm install",
+  "devCommand": "npx expo start --web",
+  "framework": null,
+  "rewrites": [
     {
-      "src": "dist/**",
-      "use": "@vercel/static"
+      "source": "/(.*)",
+      "destination": "/index.html"
     }
-  ],
-  "routes": [
-    {
-      "src": "/(.*)",
-      "dest": "/dist/$1"
-    },
-    {
-      "src": "/(.*)",
-      "dest": "/dist/index.html"
-    }
-  ],
-  "functions": {},
-  "trailingSlash": false
+  ]
 }
