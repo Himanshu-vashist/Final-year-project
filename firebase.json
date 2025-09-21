@@ -1,0 +1,22 @@
+{
+  "projects": {
+    "default": "startwise-d5323"
+  },
+  "rules": {
+    "firestore.rules": "firestore.rules"
+  },
+  "hosting": {
+    "public": "web-build",
+    "ignore": [
+      "firebase.json",
+      "**/.*",
+      "**/node_modules/**"
+    ],
+    "rewrites": [
+      {
+        "source": "**",
+        "destination": "/index.html"
+      }
+    ]
+  }
+}

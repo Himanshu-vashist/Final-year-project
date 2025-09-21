@@ -1,0 +1,165 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Helper functions for user authentication and roles
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+    
+    function getUserRole() {
+      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role;
+    }
+    
+    function isRole(role) {
+      return isAuthenticated() && getUserRole() == role;
+    }
+    
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+    
+    function isGovernmentUser() {
+      return isRole('government');
+    }
+    
+    function isResearcher() {
+      return isRole('researcher');
+    }
+    
+    function isEntrepreneur() {
+      return isRole('entrepreneur');
+    }
+    
+    function isInvestor() {
+      return isRole('investor');
+    }
+    
+    function isPublicUser() {
+      return isRole('public');
+    }
+    
+    // Users collection - users can read/write their own data
+    match /users/{userId} {
+      allow read, write: if isAuthenticated() && (
+        isOwner(userId) || 
+        isGovernmentUser()
+      );
+      allow read: if isAuthenticated(); // All authenticated users can read basic user info
+    }
+    
+    // Innovations collection
+    match /innovations/{innovationId} {
+      allow read: if isAuthenticated();
+      allow create: if isAuthenticated() && (
+        isEntrepreneur() || 
+        isResearcher() || 
+        isGovernmentUser()
+      );
+      allow update, delete: if isAuthenticated() && (
+        isOwner(resource.data.createdBy) || 
+        isGovernmentUser()
+      );
+    }
+    
+    // Research collection
+    match /research/{researchId} {
+      allow read: if isAuthenticated();
+      allow create: if isAuthenticated() && (
+        isResearcher() || 
+        isGovernmentUser()
+      );
+      allow update, delete: if isAuthenticated() && (
+        isOwner(resource.data.createdBy) || 
+        isGovernmentUser()
+      );
+    }
+    
+    // IPR (Intellectual Property Rights) collection
+    match /ipr/{iprId} {
+      allow read: if isAuthenticated();
+      allow create: if isAuthenticated() && (
+        isResearcher() || 
+        isEntrepreneur() || 
+        isGovernmentUser()
+      );
+      allow update, delete: if isAuthenticated() && (
+        isOwner(resource.data.createdBy) || 
+        isGovernmentUser()
+      );
+    }
+    
+    // Startups collection
+    match /startups/{startupId} {
+      allow read: if isAuthenticated();
+      allow create: if isAuthenticated() && (
+        isEntrepreneur() || 
+        isGovernmentUser()
+      );
+      allow update, delete: if isAuthenticated() && (
+        isOwner(resource.data.createdBy) || 
+        isGovernmentUser()
+      );
+    }
+    
+    // Analytics collection - mainly for government users
+    match /analytics/{analyticsId} {
+      allow read: if isAuthenticated();
+      allow create, update, delete: if isGovernmentUser();
+    }
+    
+    // Funding collection
+    match /funding/{fundingId} {
+      allow read: if isAuthenticated();
+      allow create: if isAuthenticated() && (
+        isInvestor() || 
+        isGovernmentUser()
+      );
+      allow update, delete: if isAuthenticated() && (
+        isOwner(resource.data.createdBy) || 
+        isGovernmentUser()
+      );
+    }
+    
+    // Events collection
+    match /events/{eventId} {
+      allow read: if isAuthenticated();
+      allow create, update, delete: if isGovernmentUser();
+    }
+    
+    // Notifications collection
+    match /notifications/{notificationId} {
+      allow read: if isAuthenticated() && isOwner(resource.data.userId);
+      allow create: if isAuthenticated();
+      allow update, delete: if isAuthenticated() && (
+        isOwner(resource.data.userId) || 
+        isGovernmentUser()
+      );
+    }
+    
+    // Applications collection (for various application types)
+    match /applications/{applicationId} {
+      allow read: if isAuthenticated();
+      allow create: if isAuthenticated();
+      allow update, delete: if isAuthenticated() && (
+        isOwner(resource.data.createdBy) || 
+        isGovernmentUser()
+      );
+    }
+    
+    // Collaborations collection
+    match /collaborations/{collaborationId} {
+      allow read: if isAuthenticated();
+      allow create: if isAuthenticated();
+      allow update, delete: if isAuthenticated() && (
+        isOwner(resource.data.createdBy) || 
+        resource.data.participants[request.auth.uid] != null ||
+        isGovernmentUser()
+      );
+    }
+    
+    // Default rule for any other collections
+    match /{document=**} {
+      allow read, write: if isGovernmentUser();
+    }
+  }
+}
