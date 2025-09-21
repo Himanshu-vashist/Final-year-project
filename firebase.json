@@ -1,12 +1,12 @@
 {
   "projects": {
-    "default": "startwise-d5323"
+    "default": "alumni-411f9"
   },
   "rules": {
     "firestore.rules": "firestore.rules"
   },
   "hosting": {
-    "public": "web-build",
+    "public": "dist",
     "ignore": [
       "firebase.json",
       "**/.*",
@@ -16,6 +16,17 @@
       {
         "source": "**",
         "destination": "/index.html"
+      }
+    ],
+    "headers": [
+      {
+        "source": "**/*.@(js|css)",
+        "headers": [
+          {
+            "key": "Cache-Control",
+            "value": "max-age=31536000"
+          }
+        ]
       }
     ]
   }

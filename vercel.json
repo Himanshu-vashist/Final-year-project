@@ -1,0 +1,22 @@
+{
+  "version": 2,
+  "name": "gujarat-innovation-hub",
+  "builds": [
+    {
+      "src": "dist/**",
+      "use": "@vercel/static"
+    }
+  ],
+  "routes": [
+    {
+      "src": "/(.*)",
+      "dest": "/dist/$1"
+    },
+    {
+      "src": "/(.*)",
+      "dest": "/dist/index.html"
+    }
+  ],
+  "functions": {},
+  "trailingSlash": false
+}
