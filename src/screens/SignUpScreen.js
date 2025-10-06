@@ -7,7 +7,8 @@ import {
   ScrollView,
   Alert,
   KeyboardAvoidingView,
-  Platform
+  Platform,
+  Dimensions
 } from 'react-native';
 import { TextInput, Button, Card, Title, RadioButton } from 'react-native-paper';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -127,12 +128,21 @@ export default function SignUpScreen({ navigation }) {
     <KeyboardAvoidingView 
       style={styles.container} 
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 64}
     >
       <LinearGradient
         colors={['#667eea', '#764ba2']}
         style={styles.gradient}
       >
-        <ScrollView contentContainerStyle={styles.scrollContainer}>
+        <ScrollView 
+          style={[styles.scroll, { overflow: 'scroll' }]}
+          contentContainerStyle={styles.scrollContainer} 
+          keyboardShouldPersistTaps="handled" 
+          showsVerticalScrollIndicator={true}
+          keyboardDismissMode="on-drag"
+          scrollEnabled={true}
+          persistentScrollbar={true}
+        >
           {/* Header */}
           <View style={styles.header}>
             <TouchableOpacity 
@@ -315,6 +325,11 @@ const styles = StyleSheet.create({
   scrollContainer: {
     flexGrow: 1,
     padding: 20,
+    paddingBottom: 140,
+    minHeight: Dimensions.get('window').height,
+  },
+  scroll: {
+    flex: 1,
   },
   header: {
     alignItems: 'center',

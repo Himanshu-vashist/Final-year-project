@@ -8,7 +8,7 @@ import {
   Alert,
   Image,
   KeyboardAvoidingView,
-  Platform
+  Platform,
 } from 'react-native';
 import { TextInput, Button, Card, Title, Paragraph } from 'react-native-paper';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -32,7 +32,6 @@ export default function LoginScreen({ navigation }) {
     setLoading(true);
     try {
       await signIn(email, password);
-      // Navigation will be handled automatically by the auth state change
     } catch (error) {
       console.error('Login error:', error);
       Alert.alert('Login Failed', error.message || 'Please check your credentials and try again.');
@@ -42,113 +41,120 @@ export default function LoginScreen({ navigation }) {
   };
 
   return (
-    <KeyboardAvoidingView 
-      style={styles.container} 
+    <KeyboardAvoidingView
+      style={styles.container}
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 64}
     >
-      <LinearGradient
-        colors={['#667eea', '#764ba2']}
-        style={styles.gradient}
-      >
-        <ScrollView contentContainerStyle={styles.scrollContainer}>
-          {/* Header */}
-          <View style={styles.header}>
-            <Image 
-              source={require('../../assets/icon.png')} 
-              style={styles.logo}
-              resizeMode="contain"
-            />
-            <Title style={styles.title}>Gujarat Innovation Hub</Title>
-            <Paragraph style={styles.subtitle}>
-              Unifying Research, IPR, Innovation & Start-ups
-            </Paragraph>
-          </View>
-
-          {/* Login Card */}
-          <Card style={styles.card}>
-            <Card.Content>
-              <View style={styles.cardHeader}>
-                <Ionicons name="log-in-outline" size={24} color="#667eea" />
-                <Text style={styles.cardTitle}>Sign In</Text>
-              </View>
-
-              <TextInput
-                label="Email Address"
-                value={email}
-                onChangeText={setEmail}
-                mode="outlined"
-                style={styles.input}
-                keyboardType="email-address"
-                autoCapitalize="none"
-                left={<TextInput.Icon icon="email" />}
-                theme={{ colors: { primary: '#667eea' } }}
+      <LinearGradient colors={['#667eea', '#764ba2']} style={styles.gradient}>
+        <ScrollView
+          contentContainerStyle={styles.scrollContainer}
+          showsVerticalScrollIndicator={true}
+          persistentScrollbar={true}
+          keyboardShouldPersistTaps="handled"
+          keyboardDismissMode="on-drag"
+        >
+          <View style={styles.contentWrapper}>
+            {/* Header */}
+            <View style={styles.header}>
+              <Image
+                source={require('../../assets/icon.png')}
+                style={styles.logo}
+                resizeMode="contain"
               />
+              <Title style={styles.title}>Gujarat Innovation Hub</Title>
+              <Paragraph style={styles.subtitle}>
+                Unifying Research, IPR, Innovation & Start-ups
+              </Paragraph>
+            </View>
 
-              <TextInput
-                label="Password"
-                value={password}
-                onChangeText={setPassword}
-                mode="outlined"
-                style={styles.input}
-                secureTextEntry={!showPassword}
-                left={<TextInput.Icon icon="lock" />}
-                right={
-                  <TextInput.Icon 
-                    icon={showPassword ? "eye-off" : "eye"} 
-                    onPress={() => setShowPassword(!showPassword)}
-                  />
-                }
-                theme={{ colors: { primary: '#667eea' } }}
-              />
+            {/* Login Card */}
+            <Card style={styles.card}>
+              <Card.Content>
+                <View style={styles.cardHeader}>
+                  <Ionicons name="log-in-outline" size={24} color="#667eea" />
+                  <Text style={styles.cardTitle}>Sign In</Text>
+                </View>
 
-              <Button
-                mode="contained"
-                onPress={handleLogin}
-                loading={loading}
-                disabled={loading}
-                style={styles.loginButton}
-                contentStyle={styles.buttonContent}
-                labelStyle={styles.buttonLabel}
-              >
-                {loading ? 'Signing In...' : 'Sign In'}
-              </Button>
+                <TextInput
+                  label="Email Address"
+                  value={email}
+                  onChangeText={setEmail}
+                  mode="outlined"
+                  style={styles.input}
+                  keyboardType="email-address"
+                  autoCapitalize="none"
+                  left={<TextInput.Icon icon="email" />}
+                  theme={{ colors: { primary: '#667eea' } }}
+                />
 
-              <View style={styles.divider}>
-                <View style={styles.dividerLine} />
-                <Text style={styles.dividerText}>or</Text>
-                <View style={styles.dividerLine} />
-              </View>
+                <TextInput
+                  label="Password"
+                  value={password}
+                  onChangeText={setPassword}
+                  mode="outlined"
+                  style={styles.input}
+                  secureTextEntry={!showPassword}
+                  left={<TextInput.Icon icon="lock" />}
+                  right={
+                    <TextInput.Icon
+                      icon={showPassword ? 'eye-off' : 'eye'}
+                      onPress={() => setShowPassword(!showPassword)}
+                    />
+                  }
+                  theme={{ colors: { primary: '#667eea' } }}
+                />
 
-              <TouchableOpacity
-                style={styles.signUpLink}
-                onPress={() => navigation.navigate('SignUp')}
-              >
-                <Text style={styles.linkText}>
-                  Don't have an account? <Text style={styles.linkTextBold}>Sign Up</Text>
-                </Text>
-              </TouchableOpacity>
-            </Card.Content>
-          </Card>
+                <Button
+                  mode="contained"
+                  onPress={handleLogin}
+                  loading={loading}
+                  disabled={loading}
+                  style={styles.loginButton}
+                  contentStyle={styles.buttonContent}
+                  labelStyle={styles.buttonLabel}
+                >
+                  {loading ? 'Signing In...' : 'Sign In'}
+                </Button>
 
-          {/* Features Section */}
-          <View style={styles.featuresContainer}>
-            <Text style={styles.featuresTitle}>Platform Features</Text>
-            <View style={styles.featuresGrid}>
-              <View style={styles.featureItem}>
-                <Ionicons name="flask-outline" size={20} color="#fff" />
-                <Text style={styles.featureText}>Research Management</Text>
-              </View>
-              <View style={styles.featureItem}>
-                <Ionicons name="shield-checkmark-outline" size={20} color="#fff" />
-                <Text style={styles.featureText}>IPR Tracking</Text>
-              </View>
-              <View style={styles.featureItem}>
-                <Ionicons name="bulb-outline" size={20} color="#fff" />
-                <Text style={styles.featureText}>Innovation Hub</Text>
-              </View>
-              <View style={styles.featureItem}>
-                <Ionicons name="rocket-outline" size={20} color="#fff" />
-                <Text style={styles.featureText}>Start-up Ecosystem</Text>
+                <View style={styles.divider}>
+                  <View style={styles.dividerLine} />
+                  <Text style={styles.dividerText}>or</Text>
+                  <View style={styles.dividerLine} />
+                </View>
+
+                <TouchableOpacity
+                  style={styles.signUpLink}
+                  onPress={() => navigation.navigate('SignUp')}
+                >
+                  <Text style={styles.linkText}>
+                    Don't have an account?{' '}
+                    <Text style={styles.linkTextBold}>Sign Up</Text>
+                  </Text>
+                </TouchableOpacity>
+              </Card.Content>
+            </Card>
+
+            {/* Features Section */}
+            <View style={styles.featuresContainer}>
+              <Text style={styles.featuresTitle}>Platform Features</Text>
+              <View style={styles.featuresGrid}>
+                <View style={styles.featureItem}>
+                  <Ionicons name="flask-outline" size={20} color="#fff" />
+                  <Text style={styles.featureText}>Research Management</Text>
+                </View>
+                <View style={styles.featureItem}>
+                  <Ionicons name="shield-checkmark-outline" size={20} color="#fff" />
+                  <Text style={styles.featureText}>IPR Tracking</Text>
+                </View>
+                <View style={styles.featureItem}>
+                  <Ionicons name="bulb-outline" size={20} color="#fff" />
+                  <Text style={styles.featureText}>Innovation Hub</Text>
+                </View>
+                <View style={styles.featureItem}>
+                  <Ionicons name="rocket-outline" size={20} color="#fff" />
+                  <Text style={styles.featureText}>Start-up Ecosystem</Text>
+                </View>
               </View>
             </View>
           </View>
@@ -159,16 +165,17 @@ export default function LoginScreen({ navigation }) {
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
-  gradient: {
-    flex: 1,
-  },
+  container: { flex: 1 },
+  gradient: { flex: 1 },
   scrollContainer: {
     flexGrow: 1,
+    justifyContent: 'flex-start',
     padding: 20,
-    justifyContent: 'center',
+    paddingBottom: 100,
+  },
+  contentWrapper: {
+    flex: 1,
+    minHeight: '120%', // 🔥 ensures scroll area exceeds screen
   },
   header: {
     alignItems: 'center',
@@ -218,43 +225,19 @@ const styles = StyleSheet.create({
     backgroundColor: '#667eea',
     borderRadius: 8,
   },
-  buttonContent: {
-    paddingVertical: 8,
-  },
-  buttonLabel: {
-    fontSize: 16,
-    fontWeight: 'bold',
-  },
+  buttonContent: { paddingVertical: 8 },
+  buttonLabel: { fontSize: 16, fontWeight: 'bold' },
   divider: {
     flexDirection: 'row',
     alignItems: 'center',
     marginVertical: 15,
   },
-  dividerLine: {
-    flex: 1,
-    height: 1,
-    backgroundColor: '#ddd',
-  },
-  dividerText: {
-    marginHorizontal: 15,
-    color: '#666',
-    fontSize: 14,
-  },
-  signUpLink: {
-    alignItems: 'center',
-    paddingVertical: 10,
-  },
-  linkText: {
-    color: '#666',
-    fontSize: 14,
-  },
-  linkTextBold: {
-    color: '#667eea',
-    fontWeight: 'bold',
-  },
-  featuresContainer: {
-    marginTop: 20,
-  },
+  dividerLine: { flex: 1, height: 1, backgroundColor: '#ddd' },
+  dividerText: { marginHorizontal: 15, color: '#666', fontSize: 14 },
+  signUpLink: { alignItems: 'center', paddingVertical: 10 },
+  linkText: { color: '#666', fontSize: 14 },
+  linkTextBold: { color: '#667eea', fontWeight: 'bold' },
+  featuresContainer: { marginTop: 20 },
   featuresTitle: {
     fontSize: 18,
     fontWeight: 'bold',

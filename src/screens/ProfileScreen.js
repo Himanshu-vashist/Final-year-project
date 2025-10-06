@@ -6,7 +6,8 @@ import {
   ScrollView,
   Alert,
   TouchableOpacity,
-  Image
+  Image,
+  Platform
 } from 'react-native';
 import { TextInput, Button, Card, Title, Avatar, Switch, Divider } from 'react-native-paper';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -49,12 +50,40 @@ export default function ProfileScreen({ navigation }) {
   };
 
   const handleLogout = () => {
+    // React Native Web doesn't support multi-button Alert; use confirm instead
+    if (Platform.OS === 'web') {
+      const confirmed = typeof window !== 'undefined' ? window.confirm('Are you sure you want to logout?') : true;
+      if (!confirmed) return;
+      (async () => {
+        try {
+          await logout();
+          navigation.reset({ index: 0, routes: [{ name: 'Login' }] });
+        } catch (error) {
+          console.error('Logout error:', error);
+          alert('Failed to logout. Please try again.');
+        }
+      })();
+      return;
+    }
+
     Alert.alert(
       'Logout',
       'Are you sure you want to logout?',
       [
         { text: 'Cancel', style: 'cancel' },
-        { text: 'Logout', style: 'destructive', onPress: logout }
+        { 
+          text: 'Logout', 
+          style: 'destructive', 
+          onPress: async () => {
+            try {
+              await logout();
+              navigation.reset({ index: 0, routes: [{ name: 'Login' }] });
+            } catch (error) {
+              console.error('Logout error:', error);
+              Alert.alert('Error', 'Failed to logout. Please try again.');
+            }
+          }
+        }
       ]
     );
   };

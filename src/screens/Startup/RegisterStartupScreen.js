@@ -116,6 +116,19 @@ export default function RegisterStartupScreen({ route, navigation }) {
     }
   }, [editMode, startupId]);
 
+  const showAlert = (title, message) => {
+    if (Platform.OS === 'web') {
+      // React Native Web: use browser alert for reliability
+      if (title) {
+        window.alert(`${title}: ${message}`);
+      } else {
+        window.alert(message);
+      }
+    } else {
+      Alert.alert(title || '', message);
+    }
+  };
+
   const loadStartupData = async () => {
     try {
       setLoading(true);
@@ -267,17 +280,17 @@ export default function RegisterStartupScreen({ route, navigation }) {
 
       if (editMode && startupId) {
         await updateDoc(doc(db, 'startups', startupId), startupData);
-        Alert.alert('Success', 'Startup profile updated successfully!');
+        showAlert('Success', 'Startup profile updated successfully!');
+        navigation.navigate('Dashboard', { refresh: true });
       } else {
         startupData.createdAt = new Date().toISOString();
-        await addDoc(collection(db, 'startups'), startupData);
-        Alert.alert('Success', 'Startup registered successfully!');
+        const docRef = await addDoc(collection(db, 'startups'), startupData);
+        showAlert('Success', 'Startup registered successfully!');
+        navigation.navigate('Dashboard', { refresh: true });
       }
-
-      navigation.goBack();
     } catch (error) {
       console.error('Error saving startup:', error);
-      Alert.alert('Error', 'Failed to save startup profile. Please try again.');
+      showAlert('Error', error?.message || 'Failed to save startup profile. Please try again.');
     } finally {
       setLoading(false);
     }

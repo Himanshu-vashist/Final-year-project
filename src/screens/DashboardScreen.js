@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { useIsFocused } from '@react-navigation/native';
 import {
   View,
   Text,
@@ -18,6 +19,7 @@ import { db } from '../config/firebaseConfig';
 const { width } = Dimensions.get('window');
 
 export default function DashboardScreen({ navigation }) {
+  const isFocused = useIsFocused();
   const { userProfile, hasPermission, isRole } = useAuth();
   const [dashboardData, setDashboardData] = useState({
     recentResearch: [],
@@ -34,8 +36,10 @@ export default function DashboardScreen({ navigation }) {
   const [refreshing, setRefreshing] = useState(false);
 
   useEffect(() => {
-    loadDashboardData();
-  }, []);
+    if (isFocused) {
+      loadDashboardData();
+    }
+  }, [isFocused]);
 
   const loadDashboardData = async () => {
     try {
@@ -276,6 +280,7 @@ export default function DashboardScreen({ navigation }) {
   return (
     <ScrollView
       style={styles.container}
+      showsVerticalScrollIndicator={false}
       refreshControl={
         <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
       }

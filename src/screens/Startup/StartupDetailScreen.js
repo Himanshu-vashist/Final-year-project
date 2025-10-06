@@ -43,6 +43,9 @@ export default function StartupDetailScreen({ route, navigation }) {
   const [timeline, setTimeline] = useState([]);
   const [fundingRounds, setFundingRounds] = useState([]);
   const [updating, setUpdating] = useState(false);
+  const [creatorInfo, setCreatorInfo] = useState(null);
+  const [showCreator, setShowCreator] = useState(false);
+  const [iprs, setIprs] = useState([]);
 
   useEffect(() => {
     loadStartupDetails();
@@ -51,19 +54,32 @@ export default function StartupDetailScreen({ route, navigation }) {
   const loadStartupDetails = async () => {
     try {
       setLoading(true);
-      
       // Load startup details
       const startupDoc = await getDoc(doc(db, 'startups', startupId));
       if (startupDoc.exists()) {
         const startupData = { id: startupDoc.id, ...startupDoc.data() };
+        console.log('Loaded startupData:', startupData);
         setStartup(startupData);
-        
+        // Fetch creator info
+        if (startupData.userId) {
+          const creatorDoc = await getDoc(doc(db, 'users', startupData.userId));
+          if (creatorDoc.exists()) {
+            const creator = { id: creatorDoc.id, ...creatorDoc.data() };
+            setCreatorInfo(creator);
+            console.log('Loaded creatorInfo:', creator);
+          } else {
+            console.log('Creator user not found for userId:', startupData.userId);
+          }
+        } else {
+          console.log('No userId on startupData');
+        }
         // Load related data
         await Promise.all([
           loadFounders(startupData),
           loadInvestors(startupData),
           loadTimeline(startupData),
-          loadFundingRounds(startupData)
+          loadFundingRounds(startupData),
+          loadIPRs(startupData)
         ]);
       } else {
         Alert.alert('Error', 'Startup not found');
@@ -104,6 +120,20 @@ export default function StartupDetailScreen({ route, navigation }) {
       } catch (error) {
         console.error('Error loading investors:', error);
       }
+    }
+  };
+
+  const loadIPRs = async (startupData) => {
+    try {
+      const iprQuery = query(
+        collection(db, 'ipr'),
+        where('startupId', '==', startupData.id)
+      );
+      const iprSnapshot = await getDocs(iprQuery);
+      const iprData = iprSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      setIprs(iprData);
+    } catch (error) {
+      console.error('Error loading IPRs:', error);
     }
   };
 
@@ -312,6 +342,31 @@ export default function StartupDetailScreen({ route, navigation }) {
         </View>
       </LinearGradient>
 
+      {/* Button to show creator info */}
+      {creatorInfo && (
+        <TouchableOpacity style={styles.creatorButton} onPress={() => setShowCreator(!showCreator)}>
+          <Ionicons name="person-circle-outline" size={22} color="#E91E63" />
+          <Text style={styles.creatorButtonText}>Show Creator Details</Text>
+        </TouchableOpacity>
+      )}
+
+      {/* Creator info section/modal */}
+      {showCreator && creatorInfo && (
+        <View style={styles.creatorCard}>
+          <View style={styles.creatorHeader}>
+            <Avatar.Text size={48} label={creatorInfo.name?.charAt(0) || '?'} style={styles.creatorAvatar} />
+            <View style={styles.creatorInfoBox}>
+              <Text style={styles.creatorName}>{creatorInfo.name}</Text>
+              <Text style={styles.creatorRole}>{creatorInfo.role}</Text>
+              <Text style={styles.creatorOrg}>{creatorInfo.organization}</Text>
+              <Text style={styles.creatorEmail}>{creatorInfo.email}</Text>
+              {creatorInfo.phone && <Text style={styles.creatorPhone}>{creatorInfo.phone}</Text>}
+            </View>
+          </View>
+          <Button mode="outlined" onPress={() => setShowCreator(false)} style={{marginTop: 8}}>Close</Button>
+        </View>
+      )}
+
       <ScrollView style={styles.content}>
         {/* Basic Information */}
         <View style={styles.section}>
@@ -362,10 +417,10 @@ export default function StartupDetailScreen({ route, navigation }) {
                 <Text style={styles.metricLabel}>Employees</Text>
               </View>
             )}
-            {startup.revenue && (
+            {startup.currentRevenue && (
               <View style={styles.metricCard}>
                 <Ionicons name="trending-up-outline" size={24} color="#2196F3" />
-                <Text style={styles.metricValue}>{formatFunding(startup.revenue)}</Text>
+                <Text style={styles.metricValue}>{formatFunding(startup.currentRevenue)}</Text>
                 <Text style={styles.metricLabel}>Revenue</Text>
               </View>
             )}
@@ -557,6 +612,45 @@ export default function StartupDetailScreen({ route, navigation }) {
           </View>
         )}
 
+        {/* Intellectual Property */}
+        <View style={styles.section}>
+          <View style={styles.sectionHeader}>
+            <Text style={styles.sectionTitle}>Intellectual Property</Text>
+            <Button
+              mode="contained"
+              icon="plus"
+              onPress={() => navigation.navigate('AddIPR', { startupId: startup.id })}
+              style={styles.actionButton}
+            >
+              Register IPR
+            </Button>
+          </View>
+          {iprs.length > 0 ? (
+            iprs.map((ipr) => (
+              <TouchableOpacity
+                key={ipr.id}
+                style={styles.iprCard}
+                onPress={() => navigation.navigate('IPRDetail', { iprId: ipr.id })}
+              >
+                <View style={styles.iprHeader}>
+                  <Ionicons name="shield-checkmark-outline" size={24} color="#4CAF50" />
+                  <View style={styles.iprInfo}>
+                    <Text style={styles.iprTitle}>{ipr.title}</Text>
+                    <Text style={styles.iprType}>{ipr.type}</Text>
+                  </View>
+                </View>
+                <Text style={styles.iprStatus}>Status: {ipr.status}</Text>
+                {ipr.applicationNumber && (
+                  <Text style={styles.iprDetails}>Application #: {ipr.applicationNumber}</Text>
+                )}
+                <Text style={styles.iprDate}>Filed: {ipr.filingDate?.toDate().toLocaleDateString()}</Text>
+              </TouchableOpacity>
+            ))
+          ) : (
+            <Text style={styles.emptyText}>No intellectual property registered yet.</Text>
+          )}
+        </View>
+
         {/* Documents & Links */}
         {(startup.documents?.length > 0 || startup.links?.length > 0) && (
           <View style={styles.section}>
@@ -676,6 +770,67 @@ export default function StartupDetailScreen({ route, navigation }) {
 }
 
 const styles = StyleSheet.create({
+  creatorButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#fff',
+    borderRadius: 8,
+    padding: 10,
+    margin: 12,
+    alignSelf: 'flex-start',
+    borderWidth: 1,
+    borderColor: '#E91E63',
+  },
+  creatorButtonText: {
+    color: '#E91E63',
+    fontWeight: 'bold',
+    marginLeft: 8,
+    fontSize: 15,
+  },
+  creatorCard: {
+    backgroundColor: '#fff',
+    borderRadius: 12,
+    padding: 16,
+    marginHorizontal: 16,
+    marginBottom: 12,
+    borderWidth: 1,
+    borderColor: '#E91E63',
+    elevation: 2,
+  },
+  creatorHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  creatorAvatar: {
+    backgroundColor: '#E91E63',
+    marginRight: 12,
+  },
+  creatorInfoBox: {
+    flex: 1,
+  },
+  creatorName: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#333',
+  },
+  creatorRole: {
+    fontSize: 14,
+    color: '#9C27B0',
+    fontWeight: '600',
+  },
+  creatorOrg: {
+    fontSize: 13,
+    color: '#666',
+  },
+  creatorEmail: {
+    fontSize: 13,
+    color: '#2196F3',
+  },
+  creatorPhone: {
+    fontSize: 13,
+    color: '#4CAF50',
+  },
   container: {
     flex: 1,
     backgroundColor: '#f5f5f5',

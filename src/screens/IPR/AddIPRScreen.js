@@ -86,14 +86,40 @@ export default function AddIPRScreen({ route, navigation }) {
     attorneyReference: '',
     tags: [],
     isPublic: false,
-    documents: []
+    documents: [],
+    startupId: route.params?.startupId || null // Link to startup if provided
   });
 
   useEffect(() => {
-    if (editMode && iprId) {
-      loadIPRData();
+    const initializeData = async () => {
+      if (editMode && iprId) {
+        await loadIPRData();
+      } else if (route.params?.startupId) {
+        await loadStartupData();
+      }
+    };
+    initializeData();
+  }, [editMode, iprId, route.params?.startupId]);
+
+  const loadStartupData = async () => {
+    try {
+      const startupDoc = await getDoc(doc(db, 'startups', route.params.startupId));
+      if (startupDoc.exists()) {
+        const startupData = startupDoc.data();
+        setFormData(prev => ({
+          ...prev,
+          organization: startupData.name || prev.organization,
+          applicantName: startupData.founderName || prev.applicantName,
+          contactEmail: startupData.contactEmail || prev.contactEmail,
+          contactPhone: startupData.contactPhone || prev.contactPhone,
+          tags: [...prev.tags, ...(startupData.sector ? [startupData.sector.toLowerCase()] : [])],
+          startupId: route.params.startupId
+        }));
+      }
+    } catch (error) {
+      console.error('Error loading startup data:', error);
     }
-  }, [editMode, iprId]);
+  };
 
   const loadIPRData = async () => {
     try {

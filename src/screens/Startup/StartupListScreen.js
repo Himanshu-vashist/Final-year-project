@@ -51,7 +51,7 @@ const FUNDING_STAGES = [
 ];
 
 export default function StartupListScreen({ navigation }) {
-  const { userProfile, hasPermission } = useAuth();
+  const { userProfile, hasPermission, loading: authLoading } = useAuth();
   const [startups, setStartups] = useState([]);
   const [filteredStartups, setFilteredStartups] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -69,9 +69,12 @@ export default function StartupListScreen({ navigation }) {
   const [lastDoc, setLastDoc] = useState(null);
   const [hasMore, setHasMore] = useState(true);
 
+  // Wait for userProfile to be loaded before querying
   useEffect(() => {
-    loadStartups();
-  }, []);
+    if (!authLoading && userProfile) {
+      loadStartups();
+    }
+  }, [authLoading, userProfile]);
 
   useEffect(() => {
     filterStartups();
@@ -191,7 +194,8 @@ export default function StartupListScreen({ navigation }) {
   };
 
   const canAddStartup = () => {
-    return hasPermission('register_startup') || hasPermission('manage_startups');
+    // Entrepreneurs have 'submit_startup' permission
+    return hasPermission('submit_startup') || hasPermission('manage_startups');
   };
 
   const canViewDetails = (startup) => {
@@ -255,10 +259,10 @@ export default function StartupListScreen({ navigation }) {
               <Text style={styles.metricText}>{startup.employeeCount} employees</Text>
             </View>
           )}
-          {startup.revenue && (
+          {startup.currentRevenue && (
             <View style={styles.metric}>
               <Ionicons name="trending-up-outline" size={14} color="#4CAF50" />
-              <Text style={styles.metricText}>{formatFunding(startup.revenue)} revenue</Text>
+              <Text style={styles.metricText}>{formatFunding(startup.currentRevenue)} revenue</Text>
             </View>
           )}
           {startup.totalFunding && (
@@ -302,6 +306,10 @@ export default function StartupListScreen({ navigation }) {
     </TouchableOpacity>
   );
 
+
+  if (authLoading || !userProfile) {
+    return <LoadingSpinner message="Loading user profile..." />;
+  }
   if (loading) {
     return <LoadingSpinner message="Loading startup ecosystem..." />;
   }
