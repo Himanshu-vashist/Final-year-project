@@ -99,6 +99,24 @@ service cloud.firestore {
         isOwner(resource.data.createdBy) || 
         isGovernmentUser()
       );
+
+      // Nested collections for startups
+      match /fundingRounds/{roundId} {
+        allow read: if isAuthenticated();
+        allow write: if isAuthenticated() && (
+          isOwner(get(/databases/$(database)/documents/startups/$(startupId)).data.createdBy) || 
+          isGovernmentUser() ||
+          isInvestor()
+        );
+      }
+
+      match /timeline/{eventId} {
+        allow read: if isAuthenticated();
+        allow write: if isAuthenticated() && (
+          isOwner(get(/databases/$(database)/documents/startups/$(startupId)).data.createdBy) || 
+          isGovernmentUser()
+        );
+      };
     }
     
     // Analytics collection - mainly for government users

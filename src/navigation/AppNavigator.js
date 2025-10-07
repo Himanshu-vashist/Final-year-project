@@ -268,6 +268,9 @@ function MainDrawer() {
 // Root Navigator
 function RootNavigator() {
   const { currentUser, loading } = useAuth();
+  
+  console.log('RootNavigator - Current user:', currentUser ? 'exists' : 'null');
+  console.log('RootNavigator - Loading:', loading);
 
   if (loading) {
     return null; // You can add a loading screen here
@@ -275,7 +278,13 @@ function RootNavigator() {
 
   return (
     <NavigationContainer>
-      {currentUser ? <MainDrawer /> : <AuthStack />}
+      {currentUser ? (
+        console.log('Rendering MainDrawer'),
+        <MainDrawer />
+      ) : (
+        console.log('Rendering AuthStack'),
+        <AuthStack />
+      )}
     </NavigationContainer>
   );
 }

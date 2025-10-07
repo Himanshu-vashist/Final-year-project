@@ -37,15 +37,62 @@ export default function DashboardScreen({ navigation }) {
     loadDashboardData();
   }, []);
 
+  const onRefresh = React.useCallback(async () => {
+    setRefreshing(true);
+    await loadDashboardData();
+    setRefreshing(false);
+  }, []);
+  
+  const loadStats = async () => {
+    try {
+      // This would typically be cached or computed server-side for performance
+      const stats = {
+        totalResearch: 0,
+        totalIPR: 0,
+        totalStartups: 0,
+        totalFunding: 0
+      };
+
+      if (hasPermission('view_analytics')) {
+        // Load aggregated statistics
+        const researchSnapshot = await getDocs(collection(db, 'research'));
+        const iprSnapshot = await getDocs(collection(db, 'ipr'));
+        const startupsSnapshot = await getDocs(collection(db, 'startups'));
+
+        stats.totalResearch = researchSnapshot.size;
+        stats.totalIPR = iprSnapshot.size;
+        stats.totalStartups = startupsSnapshot.size;
+
+        // Calculate total funding
+        startupsSnapshot.forEach(doc => {
+          const data = doc.data();
+          if (data.funding) {
+            stats.totalFunding += parseFloat(data.funding) || 0;
+          }
+        });
+      }
+
+      return stats;
+    } catch (error) {
+      console.error('Error loading stats:', error);
+      return {
+        totalResearch: 0,
+        totalIPR: 0,
+        totalStartups: 0,
+        totalFunding: 0
+      };
+    }
+  };
+
   const loadDashboardData = async () => {
     try {
       setLoading(true);
-      
-      // Load recent data based on user role
-      const recentResearch = await loadRecentResearch();
-      const recentIPR = await loadRecentIPR();
-      const recentStartups = await loadRecentStartups();
-      const stats = await loadStats();
+      const [recentResearch, recentIPR, recentStartups, stats] = await Promise.all([
+        loadRecentResearch(),
+        loadRecentIPR(),
+        loadRecentStartups(),
+        loadStats()
+      ]);
 
       setDashboardData({
         recentResearch,
@@ -160,45 +207,6 @@ export default function DashboardScreen({ navigation }) {
       console.error('Error loading startup data:', error);
       return [];
     }
-  };
-
-  const loadStats = async () => {
-    try {
-      // This would typically be cached or computed server-side for performance
-      const stats = {
-        totalResearch: 0,
-        totalIPR: 0,
-        totalStartups: 0,
-        totalFunding: 0
-      };
-
-      if (hasPermission('view_analytics')) {
-        // Load aggregated statistics
-        const researchSnapshot = await getDocs(collection(db, 'research'));
-        const iprSnapshot = await getDocs(collection(db, 'ipr'));
-        const startupsSnapshot = await getDocs(collection(db, 'startups'));
-
-        stats.totalResearch = researchSnapshot.size;
-        stats.totalIPR = iprSnapshot.size;
-        stats.totalStartups = startupsSnapshot.size;
-      }
-
-      return stats;
-    } catch (error) {
-      console.error('Error loading stats:', error);
-      return {
-        totalResearch: 0,
-        totalIPR: 0,
-        totalStartups: 0,
-        totalFunding: 0
-      };
-    }
-  };
-
-  const onRefresh = async () => {
-    setRefreshing(true);
-    await loadDashboardData();
-    setRefreshing(false);
   };
 
   const getWelcomeMessage = () => {
@@ -376,7 +384,11 @@ export default function DashboardScreen({ navigation }) {
           <View style={styles.section}>
             <Title style={styles.sectionTitle}>Recent IPR Applications</Title>
             {dashboardData.recentIPR.map((ipr) => (
-              <Card key={ipr.id} style={styles.activityCard}>
+              <Card 
+                key={ipr.id} 
+                style={styles.activityCard}
+                onPress={() => navigation.navigate('IPRDetail', { iprId: ipr.id })}
+              >
                 <Card.Content>
                   <Title style={styles.cardTitle}>{ipr.title}</Title>
                   <Paragraph numberOfLines={2}>{ipr.description}</Paragraph>
@@ -384,9 +396,18 @@ export default function DashboardScreen({ navigation }) {
                     <Text style={styles.cardDate}>
                       {new Date(ipr.createdAt).toLocaleDateString()}
                     </Text>
-                    <Text style={[styles.cardStatus, { color: ipr.status === 'approved' ? '#4CAF50' : '#FF9800' }]}>
-                      {ipr.status}
-                    </Text>
+                    <View style={styles.cardActions}>
+                      <Text style={[styles.cardStatus, { color: ipr.status === 'approved' ? '#4CAF50' : '#FF9800' }]}>
+                        {ipr.status}
+                      </Text>
+                      <TouchableOpacity 
+                        style={styles.viewDetailsButton}
+                        onPress={() => navigation.navigate('IPRDetail', { iprId: ipr.id })}
+                      >
+                        <Ionicons name="information-circle-outline" size={16} color="#FF9800" />
+                        <Text style={styles.viewDetailsText}>View Details</Text>
+                      </TouchableOpacity>
+                    </View>
                   </View>
                 </Card.Content>
               </Card>
@@ -399,7 +420,11 @@ export default function DashboardScreen({ navigation }) {
           <View style={styles.section}>
             <Title style={styles.sectionTitle}>Recent Start-ups</Title>
             {dashboardData.recentStartups.map((startup) => (
-              <Card key={startup.id} style={styles.activityCard}>
+              <Card 
+                key={startup.id} 
+                style={styles.activityCard}
+                onPress={() => navigation.navigate('Startups', { screen: 'StartupDetail', params: { startupId: startup.id } })}
+              >
                 <Card.Content>
                   <Title style={styles.cardTitle}>{startup.name}</Title>
                   <Paragraph numberOfLines={2}>{startup.description}</Paragraph>
@@ -407,6 +432,13 @@ export default function DashboardScreen({ navigation }) {
                     <Text style={styles.cardDate}>
                       {new Date(startup.createdAt).toLocaleDateString()}
                     </Text>
+                    <TouchableOpacity 
+                      style={styles.viewDetailsButton}
+                      onPress={() => navigation.navigate('Startups', { screen: 'StartupDetail', params: { startupId: startup.id } })}
+                    >
+                      <Ionicons name="information-circle-outline" size={16} color="#E91E63" />
+                      <Text style={styles.viewDetailsText}>View Details</Text>
+                    </TouchableOpacity>
                     <Text style={[styles.cardStatus, { color: startup.stage === 'growth' ? '#4CAF50' : '#2196F3' }]}>
                       {startup.stage}
                     </Text>
@@ -543,5 +575,19 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontWeight: 'bold',
     textTransform: 'uppercase',
+  },
+  viewDetailsButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#fafafa',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 12,
+  },
+  viewDetailsText: {
+    fontSize: 12,
+    color: '#666',
+    marginLeft: 4,
+    fontWeight: '600',
   },
 });

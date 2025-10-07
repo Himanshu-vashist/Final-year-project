@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, ActivityIndicator } from 'react-native';
 import { Surface } from 'react-native-paper';
 import { Ionicons } from '@expo/vector-icons';
 
@@ -45,7 +45,7 @@ export const InfoCard = ({ title, children, icon }) => (
   </Surface>
 );
 
-export const StatusBadge = ({ status, type = 'default' }) => {
+export const StatusBadge = ({ status = 'draft', type = 'default' }) => {
   const getStatusStyle = () => {
     const styles = {
       default: {
@@ -54,7 +54,13 @@ export const StatusBadge = ({ status, type = 'default' }) => {
         rejected: { backgroundColor: '#F8D7DA', color: '#721C24' },
         active: { backgroundColor: '#D1ECF1', color: '#0C5460' },
         completed: { backgroundColor: '#D4EDDA', color: '#155724' },
-        draft: { backgroundColor: '#F8F9FA', color: '#6C757D' }
+        draft: { backgroundColor: '#F8F9FA', color: '#6C757D' },
+        bootstrapped: { backgroundColor: '#E3F2FD', color: '#0D47A1' },
+        pre_seed: { backgroundColor: '#F3E5F5', color: '#4A148C' },
+        seed: { backgroundColor: '#E8F5E9', color: '#1B5E20' },
+        series_a: { backgroundColor: '#FFF3E0', color: '#E65100' },
+        series_b: { backgroundColor: '#E1F5FE', color: '#01579B' },
+        series_c: { backgroundColor: '#F3E5F5', color: '#4A148C' }
       },
       research: {
         ongoing: { backgroundColor: '#D1ECF1', color: '#0C5460' },
@@ -70,13 +76,18 @@ export const StatusBadge = ({ status, type = 'default' }) => {
       },
       startup: {
         ideation: { backgroundColor: '#F8F9FA', color: '#6C757D' },
-        development: { backgroundColor: '#CCE5FF', color: '#004085' },
-        growth: { backgroundColor: '#D4EDDA', color: '#155724' },
-        scaling: { backgroundColor: '#E2E3E5', color: '#383D41' }
+        validation: { backgroundColor: '#E3F2FD', color: '#0D47A1' },
+        early_stage: { backgroundColor: '#F3E5F5', color: '#4A148C' },
+        growth: { backgroundColor: '#E8F5E9', color: '#1B5E20' },
+        expansion: { backgroundColor: '#FFF3E0', color: '#E65100' },
+        mature: { backgroundColor: '#E1F5FE', color: '#01579B' },
+        exit: { backgroundColor: '#F3E5F5', color: '#4A148C' }
       }
     };
 
-    return styles[type][status] || styles.default[status] || styles.default.draft;
+    // Ensure we have valid values
+    const typeStyles = styles[type] || styles.default;
+    return typeStyles[status] || styles.default.draft;
   };
 
   const statusStyle = getStatusStyle();
@@ -254,4 +265,16 @@ const styles = StyleSheet.create({
     borderRadius: 6,
     marginBottom: 8,
   },
+  loadingSpinner: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 20,
+  }
 });
+
+export const LoadingSpinner = ({ size = 'large', color = '#667eea' }) => (
+  <View style={styles.loadingSpinner}>
+    <ActivityIndicator size={size} color={color} />
+  </View>
+);

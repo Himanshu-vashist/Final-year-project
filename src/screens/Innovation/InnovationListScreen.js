@@ -214,9 +214,19 @@ export default function InnovationListScreen({ navigation }) {
             <Text style={styles.moreTags}>+{idea.tags.length - 3} more</Text>
           )}
         </View>
-        <Text style={styles.submissionDate}>
-          {new Date(idea.createdAt).toLocaleDateString()}
-        </Text>
+        <View style={styles.ideaMetaRight}>
+          <Text style={styles.submissionDate}>
+            {new Date(idea.createdAt).toLocaleDateString()}
+          </Text>
+          <TouchableOpacity 
+            style={styles.viewDetailsButton}
+            onPress={() => canViewDetails(idea) && navigation.navigate('InnovationDetail', { ideaId: idea.id })}
+            disabled={!canViewDetails(idea)}
+          >
+            <Ionicons name="information-circle-outline" size={16} color="#9C27B0" />
+            <Text style={styles.viewDetailsText}>View Details</Text>
+          </TouchableOpacity>
+        </View>
       </View>
 
       {idea.fundingRequested && (
@@ -547,7 +557,25 @@ const styles = StyleSheet.create({
   ideaMeta: {
     flexDirection: 'row',
     justifyContent: 'space-between',
+    alignItems: 'flex-start',
+  },
+  ideaMetaRight: {
+    alignItems: 'flex-end',
+  },
+  viewDetailsButton: {
+    flexDirection: 'row',
     alignItems: 'center',
+    backgroundColor: '#F3E5F5',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 12,
+    marginTop: 8,
+  },
+  viewDetailsText: {
+    fontSize: 12,
+    color: '#9C27B0',
+    marginLeft: 4,
+    fontWeight: '600',
   },
   ideaTags: {
     flexDirection: 'row',

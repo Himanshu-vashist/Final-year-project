@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import {
   View,
   Text,
@@ -7,10 +7,14 @@ import {
   ScrollView,
   Alert,
   KeyboardAvoidingView,
-  Platform
+  Platform,
+  Animated,
+  Dimensions,
+  StatusBar
 } from 'react-native';
-import { TextInput, Button, Card, Title, RadioButton } from 'react-native-paper';
+import { TextInput, Button, Card, Title, RadioButton, Surface } from 'react-native-paper';
 import { LinearGradient } from 'expo-linear-gradient';
+import { BlurView } from 'expo-blur';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuth, USER_ROLES } from '../context/AuthContext';
 
@@ -48,6 +52,7 @@ const ROLE_OPTIONS = [
 ];
 
 export default function SignUpScreen({ navigation }) {
+  const scrollViewRef = useRef(null);
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -61,8 +66,26 @@ export default function SignUpScreen({ navigation }) {
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [showRoleDropdown, setShowRoleDropdown] = useState(false);
+  const fadeAnim = useRef(new Animated.Value(0)).current;
+  const slideAnim = useRef(new Animated.Value(30)).current;
 
   const { signUp } = useAuth();
+
+  useEffect(() => {
+    Animated.parallel([
+      Animated.timing(fadeAnim, {
+        toValue: 1,
+        duration: 1000,
+        useNativeDriver: true,
+      }),
+      Animated.timing(slideAnim, {
+        toValue: 0,
+        duration: 800,
+        useNativeDriver: true,
+      }),
+    ]).start();
+  }, []);
 
   const updateFormData = (field, value) => {
     setFormData(prev => ({ ...prev, [field]: value }));
@@ -127,12 +150,24 @@ export default function SignUpScreen({ navigation }) {
     <KeyboardAvoidingView 
       style={styles.container} 
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      keyboardVerticalOffset={Platform.OS === 'ios' ? 40 : 0}
     >
+      <StatusBar barStyle="light-content" />
       <LinearGradient
-        colors={['#667eea', '#764ba2']}
+        colors={['#4c669f', '#3b5998', '#192f6a']}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 1 }}
         style={styles.gradient}
       >
-        <ScrollView contentContainerStyle={styles.scrollContainer}>
+        <ScrollView 
+          ref={scrollViewRef}
+          contentContainerStyle={styles.scrollContainer}
+          showsVerticalScrollIndicator={true}
+          bounces={true}
+          keyboardShouldPersistTaps="handled"
+          indicatorStyle="white"
+          persistentScrollbar={true}
+        >
           {/* Header */}
           <View style={styles.header}>
             <TouchableOpacity 
@@ -146,12 +181,17 @@ export default function SignUpScreen({ navigation }) {
           </View>
 
           {/* Sign Up Card */}
-          <Card style={styles.card}>
-            <Card.Content>
-              <View style={styles.cardHeader}>
+          <Animated.View style={{
+            opacity: fadeAnim,
+            transform: [{ translateY: slideAnim }],
+            width: '100%',
+          }}>
+            <Card style={styles.card}>
+              <Card.Content>
+              {/* <View style={styles.cardHeader}>
                 <Ionicons name="person-add-outline" size={24} color="#667eea" />
                 <Text style={styles.cardTitle}>Sign Up</Text>
-              </View>
+              </View> */}
 
               {/* Basic Information */}
               <TextInput
@@ -211,39 +251,75 @@ export default function SignUpScreen({ navigation }) {
               />
 
               {/* Role Selection */}
-              <Text style={styles.sectionTitle}>Select Your Role *</Text>
-              {ROLE_OPTIONS.map((role) => (
-                <TouchableOpacity
-                  key={role.value}
+              <View style={styles.dropdownContainer}>
+                <Text style={styles.sectionTitle}>Select Your Role *</Text>
+                <TouchableOpacity 
                   style={[
-                    styles.roleOption,
-                    formData.role === role.value && styles.selectedRole
+                    styles.dropdownButton,
+                    formData.role && styles.dropdownButtonSelected
                   ]}
-                  onPress={() => updateFormData('role', role.value)}
+                  onPress={() => setShowRoleDropdown(!showRoleDropdown)}
                 >
-                  <View style={styles.roleContent}>
-                    <View style={styles.roleHeader}>
-                      <Ionicons 
-                        name={role.icon} 
-                        size={20} 
-                        color={formData.role === role.value ? '#667eea' : '#666'} 
-                      />
-                      <Text style={[
-                        styles.roleLabel,
-                        formData.role === role.value && styles.selectedRoleLabel
-                      ]}>
-                        {role.label}
-                      </Text>
-                      <RadioButton
-                        value={role.value}
-                        status={formData.role === role.value ? 'checked' : 'unchecked'}
-                        color="#667eea"
-                      />
-                    </View>
-                    <Text style={styles.roleDescription}>{role.description}</Text>
+                  <View style={styles.dropdownButtonContent}>
+                    {selectedRole ? (
+                      <>
+                        <Ionicons 
+                          name={selectedRole.icon} 
+                          size={20} 
+                          color="#4c669f"
+                        />
+                        <Text style={styles.dropdownSelectedText}>
+                          {selectedRole.label}
+                        </Text>
+                      </>
+                    ) : (
+                      <Text style={styles.dropdownPlaceholder}>Choose your role</Text>
+                    )}
+                    <Ionicons 
+                      name={showRoleDropdown ? "chevron-up" : "chevron-down"} 
+                      size={20} 
+                      color="#4c669f"
+                    />
                   </View>
                 </TouchableOpacity>
-              ))}
+                
+                {showRoleDropdown && (
+                  <View style={styles.dropdownList}>
+                    {ROLE_OPTIONS.map((role) => (
+                      <TouchableOpacity
+                        key={role.value}
+                        style={[
+                          styles.dropdownItem,
+                          formData.role === role.value && styles.dropdownItemSelected
+                        ]}
+                        onPress={() => {
+                          updateFormData('role', role.value);
+                          setShowRoleDropdown(false);
+                        }}
+                      >
+                        <View style={styles.dropdownItemContent}>
+                          <Ionicons 
+                            name={role.icon} 
+                            size={20} 
+                            color={formData.role === role.value ? '#4c669f' : '#666'} 
+                          />
+                          <View style={styles.dropdownItemText}>
+                            <Text style={[
+                              styles.dropdownItemLabel,
+                              formData.role === role.value && styles.dropdownItemLabelSelected
+                            ]}>
+                              {role.label}
+                            </Text>
+                            <Text style={styles.dropdownItemDescription}>
+                              {role.description}
+                            </Text>
+                          </View>
+                        </View>
+                      </TouchableOpacity>
+                    ))}
+                  </View>
+                )}
+              </View>
 
               {/* Additional Information */}
               <TextInput
@@ -299,6 +375,7 @@ export default function SignUpScreen({ navigation }) {
               </TouchableOpacity>
             </Card.Content>
           </Card>
+          </Animated.View>
         </ScrollView>
       </LinearGradient>
     </KeyboardAvoidingView>
@@ -306,15 +383,98 @@ export default function SignUpScreen({ navigation }) {
 }
 
 const styles = StyleSheet.create({
+  dropdownContainer: {
+    marginBottom: 20,
+  },
+  dropdownButton: {
+    borderWidth: 1,
+    borderColor: 'rgba(224, 224, 224, 0.5)',
+    borderRadius: 12,
+    backgroundColor: 'rgba(255, 255, 255, 0.75)',
+    padding: 12,
+    marginTop: 8,
+    elevation: 2,
+    shadowColor: '#4c669f',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 3,
+  },
+  dropdownButtonSelected: {
+    borderColor: '#4c669f',
+  },
+  dropdownButtonContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  dropdownSelectedText: {
+    flex: 1,
+    fontSize: 16,
+    color: '#333',
+    marginLeft: 12,
+  },
+  dropdownPlaceholder: {
+    flex: 1,
+    fontSize: 16,
+    color: '#999',
+  },
+  dropdownList: {
+    position: 'relative',
+    backgroundColor: 'rgba(255, 255, 255, 0.95)',
+    borderRadius: 12,
+    marginTop: 8,
+    elevation: 6,
+    shadowColor: '#192f6a',
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.25,
+    shadowRadius: 5,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.25)',
+    backdropFilter: 'blur(8px)',
+  },
+  dropdownItem: {
+    padding: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: '#f0f0f0',
+  },
+  dropdownItemSelected: {
+    backgroundColor: 'rgba(76, 102, 159, 0.1)',
+  },
+  dropdownItemContent: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+  },
+  dropdownItemText: {
+    flex: 1,
+    marginLeft: 12,
+  },
+  dropdownItemLabel: {
+    fontSize: 16,
+    fontWeight: '500',
+    color: '#333',
+    marginBottom: 4,
+  },
+  dropdownItemLabelSelected: {
+    color: '#4c669f',
+  },
+  dropdownItemDescription: {
+    fontSize: 13,
+    color: '#666',
+    lineHeight: 18,
+  },
   container: {
     flex: 1,
+    backgroundColor: '#000',
   },
   gradient: {
     flex: 1,
+    backgroundColor: 'transparent',
   },
   scrollContainer: {
     flexGrow: 1,
-    padding: 20,
+    paddingHorizontal: 20,
+    paddingTop: Platform.OS === 'ios' ? 60 : 40,
+    paddingBottom: 40,
+    minHeight: Dimensions.get('window').height,
   },
   header: {
     alignItems: 'center',
@@ -341,23 +501,44 @@ const styles = StyleSheet.create({
     opacity: 0.9,
   },
   card: {
-    borderRadius: 15,
-    elevation: 8,
+    borderRadius: 24,
+    elevation: 12,
+    shadowColor: '#192f6a',
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.35,
+    shadowRadius: 8,
+    marginHorizontal: 2,
+    backgroundColor: 'rgba(255, 255, 255, 0.85)',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.25)',
+    backdropFilter: 'blur(16px)',
+    padding: 8,
   },
   cardHeader: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 20,
+    marginBottom: 25,
+    paddingVertical: 10,
+    borderBottomWidth: 1,
+    borderBottomColor: '#f0f0f0',
   },
   cardTitle: {
-    fontSize: 20,
+    fontSize: 22,
     fontWeight: 'bold',
     marginLeft: 10,
     color: '#333',
   },
   input: {
-    marginBottom: 15,
-    backgroundColor: '#fff',
+    marginBottom: 20,
+    backgroundColor: 'rgba(255, 255, 255, 0.75)',
+    fontSize: 16,
+    borderRadius: 12,
+    overflow: 'hidden',
+    elevation: 2,
+    shadowColor: '#4c669f',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 3,
   },
   sectionTitle: {
     fontSize: 16,
@@ -367,16 +548,25 @@ const styles = StyleSheet.create({
     marginTop: 10,
   },
   roleOption: {
-    borderWidth: 1,
-    borderColor: '#ddd',
-    borderRadius: 8,
-    padding: 15,
-    marginBottom: 10,
-    backgroundColor: '#fff',
+    borderWidth: 1.5,
+    borderColor: 'rgba(224, 224, 224, 0.5)',
+    borderRadius: 16,
+    padding: 16,
+    marginBottom: 12,
+    backgroundColor: 'rgba(255, 255, 255, 0.9)',
+    elevation: 3,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.15,
+    shadowRadius: 3,
+    transform: [{scale: 1}],
   },
   selectedRole: {
     borderColor: '#667eea',
     backgroundColor: '#f8f9ff',
+    elevation: 4,
+    shadowOpacity: 0.15,
+    shadowRadius: 3,
   },
   roleContent: {
     flex: 1,
@@ -384,43 +574,54 @@ const styles = StyleSheet.create({
   roleHeader: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 5,
+    marginBottom: 8,
   },
   roleLabel: {
     flex: 1,
-    fontSize: 16,
+    fontSize: 17,
     fontWeight: '600',
-    marginLeft: 10,
+    marginLeft: 12,
     color: '#333',
   },
   selectedRoleLabel: {
     color: '#667eea',
   },
   roleDescription: {
-    fontSize: 12,
+    fontSize: 13,
     color: '#666',
-    marginLeft: 30,
+    marginLeft: 34,
+    lineHeight: 18,
   },
   signUpButton: {
-    marginTop: 20,
+    marginTop: 25,
     marginBottom: 20,
-    backgroundColor: '#667eea',
-    borderRadius: 8,
+    backgroundColor: '#4c669f',
+    borderRadius: 16,
+    elevation: 8,
+    shadowColor: '#192f6a',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.5,
+    shadowRadius: 8,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.2)',
+    overflow: 'hidden',
   },
   buttonContent: {
-    paddingVertical: 8,
+    paddingVertical: 10,
   },
   buttonLabel: {
-    fontSize: 16,
+    fontSize: 17,
     fontWeight: 'bold',
+    letterSpacing: 0.5,
   },
   loginLink: {
     alignItems: 'center',
-    paddingVertical: 10,
+    paddingVertical: 15,
+    marginTop: 5,
   },
   linkText: {
     color: '#666',
-    fontSize: 14,
+    fontSize: 15,
   },
   linkTextBold: {
     color: '#667eea',

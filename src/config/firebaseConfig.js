@@ -21,8 +21,16 @@ const firebaseConfig = {
 // Initialize Firebase
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
+auth.useDeviceLanguage(); // Set language to device default
+
+// Initialize other Firebase services
 const db = getFirestore(app);
 const storage = getStorage(app);
 const functions = getFunctions(app);
+
+// Add auth state change listener for debugging
+auth.onAuthStateChanged((user) => {
+  console.log('Firebase Auth State Changed:', user ? 'User is signed in' : 'User is signed out');
+});
 
 export { auth, db, storage, functions };

@@ -295,11 +295,11 @@ export default function StartupDetailScreen({ route, navigation }) {
             {startup.name}
           </Title>
           <View style={styles.headerBadges}>
-            <StatusBadge status={startup.stage} color={getStageColor(startup.stage)} />
+            <StatusBadge status={startup.stage || 'ideation'} type="startup" />
             {startup.fundingStage && (
               <StatusBadge 
-                status={startup.fundingStage} 
-                color={getFundingColor(startup.fundingStage)} 
+                status={startup.fundingStage || 'draft'}
+                type="default"
               />
             )}
             {startup.isVerified && (
@@ -489,8 +489,8 @@ export default function StartupDetailScreen({ route, navigation }) {
               <View key={round.id} style={styles.fundingRoundCard}>
                 <View style={styles.fundingRoundHeader}>
                   <StatusBadge 
-                    status={round.roundType} 
-                    color={getFundingColor(round.roundType)} 
+                    status={round.roundType || 'draft'}
+                    type="default"
                   />
                   <Text style={styles.fundingDate}>
                     {new Date(round.closingDate).toLocaleDateString()}

@@ -211,7 +211,7 @@ export default function StartupListScreen({ navigation }) {
   const renderStartupCard = (startup) => (
     <TouchableOpacity
       key={startup.id}
-      style={styles.startupCard}
+      style={[styles.startupCard, { opacity: canViewDetails(startup) ? 1 : 0.7 }]}
       onPress={() => canViewDetails(startup) && navigation.navigate('StartupDetail', { startupId: startup.id })}
       disabled={!canViewDetails(startup)}
     >
@@ -219,6 +219,14 @@ export default function StartupListScreen({ navigation }) {
         <View style={styles.startupTitleSection}>
           <Text style={styles.startupName} numberOfLines={1}>{startup.name}</Text>
           <View style={styles.badges}>
+            <TouchableOpacity 
+              style={styles.viewDetailsButton}
+              onPress={() => canViewDetails(startup) && navigation.navigate('StartupDetail', { startupId: startup.id })}
+              disabled={!canViewDetails(startup)}
+            >
+              <Ionicons name="information-circle-outline" size={16} color="#2196F3" />
+              <Text style={styles.viewDetailsText}>View Details</Text>
+            </TouchableOpacity>
             <StatusBadge status={startup.stage} color={getStageColor(startup.stage)} />
             {startup.fundingStage && (
               <StatusBadge 
@@ -623,6 +631,21 @@ const styles = StyleSheet.create({
   },
   startupInfo: {
     flex: 1,
+  },
+  viewDetailsButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#E3F2FD',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 12,
+    marginTop: 8,
+  },
+  viewDetailsText: {
+    fontSize: 12,
+    color: '#2196F3',
+    marginLeft: 4,
+    fontWeight: '600',
   },
   founderName: {
     fontSize: 14,

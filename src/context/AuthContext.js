@@ -64,21 +64,38 @@ export function AuthProvider({ children }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    console.log('AuthContext: Setting up auth state listener');
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
-      if (user) {
-        const profile = await getUserProfile(user.uid);
-        setCurrentUser(user);
-        setUserProfile(profile);
-        await AsyncStorage.setItem('userToken', user.uid);
-      } else {
+      console.log('AuthContext: Auth state changed:', user ? 'logged in' : 'logged out');
+      try {
+        if (user) {
+          console.log('AuthContext: User is logged in, fetching profile');
+          const profile = await getUserProfile(user.uid);
+          setCurrentUser(user);
+          setUserProfile(profile);
+          await AsyncStorage.setItem('userToken', user.uid);
+          console.log('AuthContext: Profile loaded and state updated');
+        } else {
+          console.log('AuthContext: User is logged out, clearing state');
+          setCurrentUser(null);
+          setUserProfile(null);
+          await AsyncStorage.removeItem('userToken');
+        }
+      } catch (error) {
+        console.error('AuthContext: Error in auth state change:', error);
+        // Ensure state is cleared on error
         setCurrentUser(null);
         setUserProfile(null);
         await AsyncStorage.removeItem('userToken');
+      } finally {
+        setLoading(false);
       }
-      setLoading(false);
     });
 
-    return unsubscribe;
+    return () => {
+      console.log('AuthContext: Cleaning up auth state listener');
+      unsubscribe();
+    };
   }, []);
 
   const getUserProfile = async (uid) => {
@@ -140,13 +157,28 @@ export function AuthProvider({ children }) {
   };
 
   const logout = async () => {
+    console.log('AuthContext: Starting logout process');
     try {
+      // First sign out from Firebase
+      console.log('AuthContext: Signing out from Firebase');
       await signOut(auth);
+      
+      // Then clear the local storage
+      console.log('AuthContext: Clearing local storage');
+      await AsyncStorage.removeItem('userToken');
+      
+      // Finally clear the state
+      console.log('AuthContext: Clearing state');
+      setCurrentUser(null);
+      setUserProfile(null);
+      
+      console.log('AuthContext: Logout successful');
+    } catch (error) {
+      console.error('AuthContext: Logout error:', error);
+      // Make sure state is cleared even if there's an error
       setCurrentUser(null);
       setUserProfile(null);
       await AsyncStorage.removeItem('userToken');
-    } catch (error) {
-      console.error('Error signing out:', error);
       throw error;
     }
   };

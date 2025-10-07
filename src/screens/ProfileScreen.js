@@ -48,15 +48,27 @@ export default function ProfileScreen({ navigation }) {
     }
   };
 
-  const handleLogout = () => {
-    Alert.alert(
-      'Logout',
-      'Are you sure you want to logout?',
-      [
-        { text: 'Cancel', style: 'cancel' },
-        { text: 'Logout', style: 'destructive', onPress: logout }
-      ]
-    );
+  const handleLogout = async () => {
+    console.log('Logout button pressed');
+    try {
+      console.log('Starting logout process');
+      setLoading(true);
+      
+      // Call logout directly without confirmation for testing
+      console.log('Calling logout function...');
+      await logout();
+      console.log('Logout completed');
+      
+      // Navigate to the login screen
+      console.log('Navigating to login screen...');
+      navigation.replace('Login');
+      
+    } catch (error) {
+      console.error('Logout error:', error);
+      Alert.alert('Error', 'Failed to logout: ' + error.message);
+    } finally {
+      setLoading(false);
+    }
   };
 
   const pickImage = async () => {
@@ -344,8 +356,10 @@ export default function ProfileScreen({ navigation }) {
           contentStyle={styles.buttonContent}
           textColor="#f44336"
           icon="logout"
+          loading={loading}
+          disabled={loading}
         >
-          Logout
+          {loading ? 'Logging out...' : 'Logout'}
         </Button>
       </View>
     </ScrollView>
