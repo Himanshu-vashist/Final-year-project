@@ -399,7 +399,7 @@ export default function IPRListScreen({ navigation }) {
         )}
       </ScrollView>
 
-      {hasPermission('submit_ipr') && (
+      {(userProfile?.role === USER_ROLES.ENTREPRENEUR || userProfile?.role === USER_ROLES.RESEARCHER || hasPermission('submit_ipr')) && (
         <FAB
           style={styles.fab}
           icon="plus"
@@ -533,7 +533,13 @@ const styles = StyleSheet.create({
     marginTop: 2,
   },
   cardActions: {
-    alignItems: 'flex-end',
+    flexDirection: 'row',
+    justifyContent: 'flex-end',
+    alignItems: 'center',
+    marginTop: 8,
+  },
+  actionButton: {
+    marginLeft: 8,
   },
   categoryChip: {
     height: 24,

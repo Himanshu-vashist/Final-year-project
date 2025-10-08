@@ -21,7 +21,9 @@ export const USER_PERMISSIONS = {
     'generate_reports',
     'manage_funding',
     'approve_applications',
-    'view_analytics'
+    'view_analytics',
+    'manage_ipr',
+    'track_ipr'
   ],
   [USER_ROLES.RESEARCHER]: [
     'submit_research',
@@ -35,7 +37,9 @@ export const USER_PERMISSIONS = {
     'view_opportunities',
     'apply_for_funding',
     'manage_profile',
-    'access_resources'
+    'access_resources',
+    'submit_ipr',
+    'track_own_ipr'
   ],
   [USER_ROLES.INVESTOR]: [
     'view_startups',

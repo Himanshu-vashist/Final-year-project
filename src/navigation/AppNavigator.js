@@ -28,6 +28,8 @@ import AddResearchScreen from '../screens/Research/AddResearchScreen';
 import IPRListScreen from '../screens/IPR/IPRListScreen';
 import IPRDetailScreen from '../screens/IPR/IPRDetailScreen';
 import AddIPRScreen from '../screens/IPR/AddIPRScreen';
+import IPRTrackingScreen from '../screens/IPR/IPRTrackingScreen';
+import GovernmentIPRScreen from '../screens/IPR/GovernmentIPRScreen';
 
 // Innovation Hub Screens
 import InnovationListScreen from '../screens/Innovation/InnovationListScreen';
@@ -80,7 +82,7 @@ function ResearchStack() {
   );
 }
 
-// IPR Stack
+// IPR Stack for Regular Users
 function IPRStack() {
   return (
     <Stack.Navigator>
@@ -98,6 +100,34 @@ function IPRStack() {
         name="AddIPR" 
         component={AddIPRScreen}
         options={{ title: 'Submit IPR Application' }}
+      />
+      <Stack.Screen
+        name="IPRTracking"
+        component={IPRTrackingScreen}
+        options={{ title: 'Track IPR Application' }}
+      />
+    </Stack.Navigator>
+  );
+}
+
+// Government IPR Management Stack
+function GovernmentIPRStack() {
+  return (
+    <Stack.Navigator>
+      <Stack.Screen 
+        name="GovernmentIPRList" 
+        component={GovernmentIPRScreen}
+        options={{ title: 'IPR Management' }}
+      />
+      <Stack.Screen 
+        name="IPRDetail" 
+        component={IPRDetailScreen}
+        options={{ title: 'IPR Details' }}
+      />
+      <Stack.Screen
+        name="IPRTracking"
+        component={IPRTrackingScreen}
+        options={{ title: 'IPR Application Status' }}
       />
     </Stack.Navigator>
   );
@@ -173,7 +203,15 @@ function MainTabs() {
       });
     }
 
-    if (hasPermission('view_opportunities') || hasPermission('manage_profile')) {
+    // Different IPR screens for government officials and regular users
+    if (userProfile?.role === 'government_official') {
+      screens.push({
+        name: 'IPRManagement',
+        component: GovernmentIPRStack,
+        icon: 'shield-checkmark',
+        label: 'IPR Management'
+      });
+    } else if (hasPermission('view_opportunities') || hasPermission('manage_profile')) {
       screens.push({
         name: 'IPR',
         component: IPRStack,
