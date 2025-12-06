@@ -4,22 +4,25 @@ import {
   Text,
   StyleSheet,
   TouchableOpacity,
-  ScrollView,
-  Alert,
   Image,
+  Alert,
   KeyboardAvoidingView,
-  Platform
+  Platform,
+  Dimensions
 } from 'react-native';
-import { TextInput, Button, Card, Title, Paragraph } from 'react-native-paper';
 import { LinearGradient } from 'expo-linear-gradient';
+import { TextInput, Checkbox } from 'react-native-paper';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '../context/AuthContext';
+
+const { width, height } = Dimensions.get('window');
 
 export default function LoginScreen({ navigation }) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const [rememberMe, setRememberMe] = useState(false);
 
   const { signIn } = useAuth();
 
@@ -32,10 +35,8 @@ export default function LoginScreen({ navigation }) {
     setLoading(true);
     try {
       await signIn(email, password);
-      // Navigation will be handled automatically by the auth state change
     } catch (error) {
-      console.error('Login error:', error);
-      Alert.alert('Login Failed', error.message || 'Please check your credentials and try again.');
+      Alert.alert('Login Failed', error.message || 'Invalid credentials');
     } finally {
       setLoading(false);
     }
@@ -43,243 +44,260 @@ export default function LoginScreen({ navigation }) {
 
   return (
     <KeyboardAvoidingView 
-      style={styles.container} 
-      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      style={{ flex: 1 }} 
+      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
     >
       <LinearGradient
-        colors={['#667eea', '#764ba2']}
-        style={styles.gradient}
+        colors={['#1a1a3e', '#2d2d5f', '#1a1a3e']}
+        style={styles.container}
       >
-        <ScrollView contentContainerStyle={styles.scrollContainer}>
-          {/* Header */}
-          <View style={styles.header}>
-            <Image 
-              source={require('../../assets/Logo.png')} 
-              style={styles.logo}
-              resizeMode="contain"
-            />
-            <Title style={styles.title}>Gujarat Innovation Hub</Title>
-            <Paragraph style={styles.subtitle}>
-              Unifying Research, IPR, Innovation & Start-ups
-            </Paragraph>
+        {/* Back Button */}
+        <TouchableOpacity 
+          style={styles.backButton}
+          onPress={() => navigation.goBack()}
+        >
+          <Ionicons name="chevron-back" size={30} color="#b366ff" />
+        </TouchableOpacity>
+
+        {/* CONTENT */}
+        <View style={styles.contentContainer}>
+
+          {/* App Icon + Branding */}
+          <View style={styles.brandHeader}>
+            <Ionicons name="cube-outline" size={64} color="#b366ff" />
+            <Text style={styles.brandTitle}>INNOVATE GUJARAT</Text>
+            <Text style={styles.brandSubtitle}>
+              Unified Platform for Research, Innovation & IPR
+            </Text>
           </View>
 
-          {/* Login Card */}
-          <Card style={styles.card}>
-            <Card.Content>
-              <View style={styles.cardHeader}>
-                <Ionicons name="log-in-outline" size={24} color="#667eea" />
-                <Text style={styles.cardTitle}>Sign In</Text>
-              </View>
+          {/* FORM AREA */}
+          <View style={styles.inputCard}>
 
+            {/* Title */}
+            <Text style={styles.loginTitle}>Login to Your Account</Text>
+
+            {/* EMAIL */}
+            <View style={styles.inputContainer}>
+              <Ionicons name="mail-outline" size={22} color="#999" style={styles.inputIcon} />
               <TextInput
-                label="Email Address"
+                placeholder="Email Address"
                 value={email}
                 onChangeText={setEmail}
-                mode="outlined"
+                mode="flat"
                 style={styles.input}
                 keyboardType="email-address"
                 autoCapitalize="none"
-                left={<TextInput.Icon icon="email" />}
-                theme={{ colors: { primary: '#667eea' } }}
+                underlineColor="transparent"
+                activeUnderlineColor="transparent"
+                placeholderTextColor="#999"
+                theme={{
+                  colors: { text: '#fff', placeholder: '#999', primary: 'transparent' }
+                }}
               />
+            </View>
 
+            {/* PASSWORD */}
+            <View style={styles.inputContainer}>
+              <Ionicons name="lock-closed-outline" size={22} color="#999" style={styles.inputIcon} />
+              
               <TextInput
-                label="Password"
+                placeholder="Password"
                 value={password}
                 onChangeText={setPassword}
-                mode="outlined"
-                style={styles.input}
+                mode="flat"
                 secureTextEntry={!showPassword}
-                left={<TextInput.Icon icon="lock" />}
-                right={
-                  <TextInput.Icon 
-                    icon={showPassword ? "eye-off" : "eye"} 
-                    onPress={() => setShowPassword(!showPassword)}
-                  />
-                }
-                theme={{ colors: { primary: '#667eea' } }}
+                style={styles.input}
+                underlineColor="transparent"
+                activeUnderlineColor="transparent"
+                placeholderTextColor="#999"
+                theme={{
+                  colors: { text: '#fff', placeholder: '#999', primary: 'transparent' }
+                }}
               />
 
-              <Button
-                mode="contained"
-                onPress={handleLogin}
-                loading={loading}
-                disabled={loading}
-                style={styles.loginButton}
-                contentStyle={styles.buttonContent}
-                labelStyle={styles.buttonLabel}
-              >
-                {loading ? 'Signing In...' : 'Sign In'}
-              </Button>
-
-              <View style={styles.divider}>
-                <View style={styles.dividerLine} />
-                <Text style={styles.dividerText}>or</Text>
-                <View style={styles.dividerLine} />
-              </View>
-
-              <TouchableOpacity
-                style={styles.signUpLink}
-                onPress={() => navigation.navigate('SignUp')}
-              >
-                <Text style={styles.linkText}>
-                  Don't have an account? <Text style={styles.linkTextBold}>Sign Up</Text>
-                </Text>
+              <TouchableOpacity onPress={() => setShowPassword(!showPassword)}>
+                <Ionicons 
+                  name={showPassword ? 'eye-off-outline' : 'eye-outline'} 
+                  size={22} 
+                  color="#999" 
+                />
               </TouchableOpacity>
-            </Card.Content>
-          </Card>
-
-          {/* Features Section */}
-          <View style={styles.featuresContainer}>
-            <Text style={styles.featuresTitle}>Platform Features</Text>
-            <View style={styles.featuresGrid}>
-              <View style={styles.featureItem}>
-                <Ionicons name="flask-outline" size={20} color="#fff" />
-                <Text style={styles.featureText}>Research Management</Text>
-              </View>
-              <View style={styles.featureItem}>
-                <Ionicons name="shield-checkmark-outline" size={20} color="#fff" />
-                <Text style={styles.featureText}>IPR Tracking</Text>
-              </View>
-              <View style={styles.featureItem}>
-                <Ionicons name="bulb-outline" size={20} color="#fff" />
-                <Text style={styles.featureText}>Innovation Hub</Text>
-              </View>
-              <View style={styles.featureItem}>
-                <Ionicons name="rocket-outline" size={20} color="#fff" />
-                <Text style={styles.featureText}>Start-up Ecosystem</Text>
-              </View>
             </View>
+
+            {/* REMEMBER ME */}
+            <TouchableOpacity 
+              style={styles.rememberContainer}
+              onPress={() => setRememberMe(!rememberMe)}
+            >
+              <Checkbox
+                status={rememberMe ? 'checked' : 'unchecked'}
+                onPress={() => setRememberMe(!rememberMe)}
+                color="#b366ff"
+                uncheckedColor="#666"
+              />
+              <Text style={styles.rememberText}>Remember for 30 days</Text>
+            </TouchableOpacity>
+
+            {/* Forgot Password */}
+            <TouchableOpacity>
+              <Text style={styles.forgotPassword}>Forgot Password?</Text>
+            </TouchableOpacity>
+
+            {/* LOGIN BUTTON */}
+            <TouchableOpacity
+              style={styles.loginButton}
+              onPress={handleLogin}
+              activeOpacity={0.8}
+            >
+              <LinearGradient
+                colors={['#b366ff', '#8b3dc7', '#6a2c96']}
+                style={styles.buttonGradient}
+              >
+                <Text style={styles.loginText}>{loading ? 'Logging In...' : 'LOGIN'}</Text>
+              </LinearGradient>
+            </TouchableOpacity>
           </View>
-        </ScrollView>
+
+          {/* FOOTER */}
+          <View style={styles.footer}>
+            <Text style={styles.footerText}>Don't have an account?</Text>
+            <TouchableOpacity onPress={() => navigation.navigate('SignUp')}>
+              <Text style={styles.signUpText}> Sign Up</Text>
+            </TouchableOpacity>
+          </View>
+
+        </View>
       </LinearGradient>
     </KeyboardAvoidingView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
+  container: { flex: 1 },
+
+  backButton: {
+    position: 'absolute',
+    top: Platform.OS === 'ios' ? 50 : 40,
+    left: 20,
+    padding: 8,
+    zIndex: 10,
+  },
+
+  contentContainer: {
     flex: 1,
-  },
-  gradient: {
-    flex: 1,
-  },
-  scrollContainer: {
-    flexGrow: 1,
-    padding: 20,
-    justifyContent: 'center',
-  },
-  header: {
-    alignItems: 'center',
-    marginBottom: 30,
-  },
-  logo: {
-    width: 80,
-    height: 80,
-    marginBottom: 15,
-  },
-  title: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: '#fff',
-    textAlign: 'center',
-    marginBottom: 5,
-  },
-  subtitle: {
-    fontSize: 14,
-    color: '#fff',
-    textAlign: 'center',
-    opacity: 0.9,
-  },
-  card: {
-    borderRadius: 15,
-    elevation: 8,
-    marginBottom: 20,
-  },
-  cardHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 20,
-  },
-  cardTitle: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    marginLeft: 10,
-    color: '#333',
-  },
-  input: {
-    marginBottom: 15,
-    backgroundColor: '#fff',
-  },
-  loginButton: {
-    marginTop: 10,
-    marginBottom: 20,
-    backgroundColor: '#667eea',
-    borderRadius: 8,
-  },
-  buttonContent: {
-    paddingVertical: 8,
-  },
-  buttonLabel: {
-    fontSize: 16,
-    fontWeight: 'bold',
-  },
-  divider: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginVertical: 15,
-  },
-  dividerLine: {
-    flex: 1,
-    height: 1,
-    backgroundColor: '#ddd',
-  },
-  dividerText: {
-    marginHorizontal: 15,
-    color: '#666',
-    fontSize: 14,
-  },
-  signUpLink: {
-    alignItems: 'center',
-    paddingVertical: 10,
-  },
-  linkText: {
-    color: '#666',
-    fontSize: 14,
-  },
-  linkTextBold: {
-    color: '#667eea',
-    fontWeight: 'bold',
-  },
-  featuresContainer: {
-    marginTop: 20,
-  },
-  featuresTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: '#fff',
-    textAlign: 'center',
-    marginBottom: 15,
-  },
-  featuresGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
+    paddingHorizontal: 25,
+    paddingTop: height > 700 ? 120 : 90,
     justifyContent: 'space-between',
   },
-  featureItem: {
-    width: '48%',
-    backgroundColor: 'rgba(255, 255, 255, 0.1)',
-    borderRadius: 10,
-    padding: 15,
-    marginBottom: 10,
+
+  brandHeader: {
     alignItems: 'center',
+    marginBottom: 35,
   },
-  featureText: {
-    color: '#fff',
-    fontSize: 12,
+
+  brandTitle: {
+    fontSize: 26,
+    fontWeight: 'bold',
+    color: '#b366ff',
+    letterSpacing: 1,
+    marginTop: 10,
+  },
+
+  brandSubtitle: {
+    fontSize: 14,
+    color: '#ddd',
+    opacity: 0.9,
+    marginTop: 4,
     textAlign: 'center',
-    marginTop: 5,
-    fontWeight: '500',
+  },
+
+  loginTitle: {
+    fontSize: 22,
+    fontWeight: 'bold',
+    color: '#fff',
+    marginBottom: 25,
+    textAlign: 'center',
+  },
+
+  inputCard: { marginBottom: 10 },
+
+  inputContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'rgba(255,255,255,0.08)',
+    borderRadius: 15,
+    paddingHorizontal: 15,
+    height: 55,
+    marginBottom: 15,
+  },
+
+  inputIcon: {
+    marginRight: 10,
+  },
+
+  input: {
+    flex: 1,
+    backgroundColor: 'transparent',
+    color: '#fff',
+    fontSize: 15,
+  },
+
+  rememberContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 15,
+  },
+
+  rememberText: {
+    color: '#fff',
+    fontSize: 13,
+  },
+
+  forgotPassword: {
+    color: '#b366ff',
+    textAlign: 'right',
+    marginBottom: 25,
+    textDecorationLine: 'underline',
+  },
+
+  loginButton: {
+    height: 55,
+    borderRadius: 30,
+    overflow: 'hidden',
+    shadowColor: '#b366ff',
+    shadowOpacity: 0.4,
+    shadowOffset: { width: 0, height: 4 },
+    shadowRadius: 6,
+  },
+
+  buttonGradient: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+
+  loginText: {
+    color: '#fff',
+    fontSize: 17,
+    fontWeight: 'bold',
+    letterSpacing: 1,
+  },
+
+  footer: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    marginBottom: 25,
+  },
+
+  footerText: {
+    color: '#bbb',
+    fontSize: 14,
+  },
+
+  signUpText: {
+    color: '#b366ff',
+    fontSize: 14,
+    fontWeight: 'bold',
   },
 });

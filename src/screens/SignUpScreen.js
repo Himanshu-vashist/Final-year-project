@@ -154,11 +154,18 @@ export default function SignUpScreen({ navigation }) {
     >
       <StatusBar barStyle="light-content" />
       <LinearGradient
-        colors={['#4c669f', '#3b5998', '#192f6a']}
+        colors={['#1a1a3e', '#2d2d5f', '#1a1a3e']}
         start={{ x: 0, y: 0 }}
         end={{ x: 1, y: 1 }}
         style={styles.gradient}
       >
+        {/* World Map Background - Optional */}
+        {/* <Image 
+          source={require('../../assets/world-map.png')} 
+          style={styles.worldMap}
+          resizeMode="cover"
+        /> */}
+        
         <ScrollView 
           ref={scrollViewRef}
           contentContainerStyle={styles.scrollContainer}
@@ -174,10 +181,10 @@ export default function SignUpScreen({ navigation }) {
               style={styles.backButton}
               onPress={() => navigation.goBack()}
             >
-              <Ionicons name="arrow-back" size={24} color="#fff" />
+              <Ionicons name="chevron-back" size={30} color="#b366ff" />
             </TouchableOpacity>
-            <Title style={styles.title}>Create Account</Title>
-            <Text style={styles.subtitle}>Join Gujarat Innovation Hub</Text>
+            <Text style={styles.welcomeText}>Create Your</Text>
+            <Text style={styles.accountText}>Account!</Text>
           </View>
 
           {/* Sign Up Card */}
@@ -186,99 +193,116 @@ export default function SignUpScreen({ navigation }) {
             transform: [{ translateY: slideAnim }],
             width: '100%',
           }}>
-            <Card style={styles.card}>
-              <Card.Content>
-              {/* <View style={styles.cardHeader}>
-                <Ionicons name="person-add-outline" size={24} color="#667eea" />
-                <Text style={styles.cardTitle}>Sign Up</Text>
-              </View> */}
-
+            <View style={styles.card}>
               {/* Basic Information */}
-              <TextInput
-                label="Full Name *"
-                value={formData.name}
-                onChangeText={(value) => updateFormData('name', value)}
-                mode="outlined"
-                style={styles.input}
-                left={<TextInput.Icon icon="account" />}
-                theme={{ colors: { primary: '#667eea' } }}
-              />
+              <View style={styles.inputContainer}>
+                <View style={styles.inputIconContainer}>
+                  <Ionicons name="person-outline" size={22} color="#999" />
+                </View>
+                <TextInput
+                  placeholder="Full Name *"
+                  value={formData.name}
+                  onChangeText={(value) => updateFormData('name', value)}
+                  mode="flat"
+                  style={styles.input}
+                  underlineColor="transparent"
+                  activeUnderlineColor="transparent"
+                  placeholderTextColor="#999"
+                  theme={{ colors: { primary: 'transparent', text: '#fff' } }}
+                />
+              </View>
 
-              <TextInput
-                label="Email Address *"
-                value={formData.email}
-                onChangeText={(value) => updateFormData('email', value)}
-                mode="outlined"
-                style={styles.input}
-                keyboardType="email-address"
-                autoCapitalize="none"
-                left={<TextInput.Icon icon="email" />}
-                theme={{ colors: { primary: '#667eea' } }}
-              />
+              <View style={styles.inputContainer}>
+                <View style={styles.inputIconContainer}>
+                  <Ionicons name="mail-outline" size={22} color="#999" />
+                </View>
+                <TextInput
+                  placeholder="Email Address *"
+                  value={formData.email}
+                  onChangeText={(value) => updateFormData('email', value)}
+                  mode="flat"
+                  style={styles.input}
+                  keyboardType="email-address"
+                  autoCapitalize="none"
+                  underlineColor="transparent"
+                  activeUnderlineColor="transparent"
+                  placeholderTextColor="#999"
+                  theme={{ colors: { primary: 'transparent', text: '#fff' } }}
+                />
+              </View>
 
-              <TextInput
-                label="Password *"
-                value={formData.password}
-                onChangeText={(value) => updateFormData('password', value)}
-                mode="outlined"
-                style={styles.input}
-                secureTextEntry={!showPassword}
-                left={<TextInput.Icon icon="lock" />}
-                right={
-                  <TextInput.Icon 
-                    icon={showPassword ? "eye-off" : "eye"} 
-                    onPress={() => setShowPassword(!showPassword)}
+              <View style={styles.inputContainer}>
+                <View style={styles.inputIconContainer}>
+                  <Ionicons name="lock-closed-outline" size={22} color="#999" />
+                </View>
+                <TextInput
+                  placeholder="Password *"
+                  value={formData.password}
+                  onChangeText={(value) => updateFormData('password', value)}
+                  mode="flat"
+                  style={styles.input}
+                  secureTextEntry={!showPassword}
+                  underlineColor="transparent"
+                  activeUnderlineColor="transparent"
+                  placeholderTextColor="#999"
+                  theme={{ colors: { primary: 'transparent', text: '#fff' } }}
+                />
+                <TouchableOpacity 
+                  style={styles.eyeIcon}
+                  onPress={() => setShowPassword(!showPassword)}
+                >
+                  <Ionicons 
+                    name={showPassword ? 'eye-off-outline' : 'eye-outline'} 
+                    size={22} 
+                    color="#999" 
                   />
-                }
-                theme={{ colors: { primary: '#667eea' } }}
-              />
+                </TouchableOpacity>
+              </View>
 
-              <TextInput
-                label="Confirm Password *"
-                value={formData.confirmPassword}
-                onChangeText={(value) => updateFormData('confirmPassword', value)}
-                mode="outlined"
-                style={styles.input}
-                secureTextEntry={!showConfirmPassword}
-                left={<TextInput.Icon icon="lock-check" />}
-                right={
-                  <TextInput.Icon 
-                    icon={showConfirmPassword ? "eye-off" : "eye"} 
-                    onPress={() => setShowConfirmPassword(!showConfirmPassword)}
+              <View style={styles.inputContainer}>
+                <View style={styles.inputIconContainer}>
+                  <Ionicons name="lock-closed-outline" size={22} color="#999" />
+                </View>
+                <TextInput
+                  placeholder="Confirm Password *"
+                  value={formData.confirmPassword}
+                  onChangeText={(value) => updateFormData('confirmPassword', value)}
+                  mode="flat"
+                  style={styles.input}
+                  secureTextEntry={!showConfirmPassword}
+                  underlineColor="transparent"
+                  activeUnderlineColor="transparent"
+                  placeholderTextColor="#999"
+                  theme={{ colors: { primary: 'transparent', text: '#fff' } }}
+                />
+                <TouchableOpacity 
+                  style={styles.eyeIcon}
+                  onPress={() => setShowConfirmPassword(!showConfirmPassword)}
+                >
+                  <Ionicons 
+                    name={showConfirmPassword ? 'eye-off-outline' : 'eye-outline'} 
+                    size={22} 
+                    color="#999" 
                   />
-                }
-                theme={{ colors: { primary: '#667eea' } }}
-              />
+                </TouchableOpacity>
+              </View>
 
               {/* Role Selection */}
               <View style={styles.dropdownContainer}>
                 <Text style={styles.sectionTitle}>Select Your Role *</Text>
                 <TouchableOpacity 
-                  style={[
-                    styles.dropdownButton,
-                    formData.role && styles.dropdownButtonSelected
-                  ]}
+                  style={styles.dropdownButton}
                   onPress={() => setShowRoleDropdown(!showRoleDropdown)}
                 >
                   <View style={styles.dropdownButtonContent}>
-                    {selectedRole ? (
-                      <>
-                        <Ionicons 
-                          name={selectedRole.icon} 
-                          size={20} 
-                          color="#4c669f"
-                        />
-                        <Text style={styles.dropdownSelectedText}>
-                          {selectedRole.label}
-                        </Text>
-                      </>
-                    ) : (
-                      <Text style={styles.dropdownPlaceholder}>Choose your role</Text>
-                    )}
+                    <Ionicons name="briefcase-outline" size={22} color="#999" />
+                    <Text style={selectedRole ? styles.dropdownSelectedText : styles.dropdownPlaceholder}>
+                      {selectedRole ? selectedRole.label : 'Choose your role'}
+                    </Text>
                     <Ionicons 
                       name={showRoleDropdown ? "chevron-up" : "chevron-down"} 
-                      size={20} 
-                      color="#4c669f"
+                      size={22} 
+                      color="#999"
                     />
                   </View>
                 </TouchableOpacity>
@@ -301,7 +325,7 @@ export default function SignUpScreen({ navigation }) {
                           <Ionicons 
                             name={role.icon} 
                             size={20} 
-                            color={formData.role === role.value ? '#4c669f' : '#666'} 
+                            color={formData.role === role.value ? '#b366ff' : '#999'} 
                           />
                           <View style={styles.dropdownItemText}>
                             <Text style={[
@@ -322,59 +346,83 @@ export default function SignUpScreen({ navigation }) {
               </View>
 
               {/* Additional Information */}
-              <TextInput
-                label="Organization"
-                value={formData.organization}
-                onChangeText={(value) => updateFormData('organization', value)}
-                mode="outlined"
-                style={styles.input}
-                left={<TextInput.Icon icon="office-building" />}
-                theme={{ colors: { primary: '#667eea' } }}
-              />
+              <View style={styles.inputContainer}>
+                <View style={styles.inputIconContainer}>
+                  <Ionicons name="business-outline" size={22} color="#999" />
+                </View>
+                <TextInput
+                  placeholder="Organization"
+                  value={formData.organization}
+                  onChangeText={(value) => updateFormData('organization', value)}
+                  mode="flat"
+                  style={styles.input}
+                  underlineColor="transparent"
+                  activeUnderlineColor="transparent"
+                  placeholderTextColor="#999"
+                  theme={{ colors: { primary: 'transparent', text: '#fff' } }}
+                />
+              </View>
 
-              <TextInput
-                label="Designation"
-                value={formData.designation}
-                onChangeText={(value) => updateFormData('designation', value)}
-                mode="outlined"
-                style={styles.input}
-                left={<TextInput.Icon icon="badge-account" />}
-                theme={{ colors: { primary: '#667eea' } }}
-              />
+              <View style={styles.inputContainer}>
+                <View style={styles.inputIconContainer}>
+                  <Ionicons name="ribbon-outline" size={22} color="#999" />
+                </View>
+                <TextInput
+                  placeholder="Designation"
+                  value={formData.designation}
+                  onChangeText={(value) => updateFormData('designation', value)}
+                  mode="flat"
+                  style={styles.input}
+                  underlineColor="transparent"
+                  activeUnderlineColor="transparent"
+                  placeholderTextColor="#999"
+                  theme={{ colors: { primary: 'transparent', text: '#fff' } }}
+                />
+              </View>
 
-              <TextInput
-                label="Phone Number"
-                value={formData.phone}
-                onChangeText={(value) => updateFormData('phone', value)}
-                mode="outlined"
-                style={styles.input}
-                keyboardType="phone-pad"
-                left={<TextInput.Icon icon="phone" />}
-                theme={{ colors: { primary: '#667eea' } }}
-              />
-
-              <Button
-                mode="contained"
-                onPress={handleSignUp}
-                loading={loading}
-                disabled={loading}
-                style={styles.signUpButton}
-                contentStyle={styles.buttonContent}
-                labelStyle={styles.buttonLabel}
-              >
-                {loading ? 'Creating Account...' : 'Create Account'}
-              </Button>
+              <View style={styles.inputContainer}>
+                <View style={styles.inputIconContainer}>
+                  <Ionicons name="call-outline" size={22} color="#999" />
+                </View>
+                <TextInput
+                  placeholder="Phone Number"
+                  value={formData.phone}
+                  onChangeText={(value) => updateFormData('phone', value)}
+                  mode="flat"
+                  style={styles.input}
+                  keyboardType="phone-pad"
+                  underlineColor="transparent"
+                  activeUnderlineColor="transparent"
+                  placeholderTextColor="#999"
+                  theme={{ colors: { primary: 'transparent', text: '#fff' } }}
+                />
+              </View>
 
               <TouchableOpacity
-                style={styles.loginLink}
-                onPress={() => navigation.navigate('Login')}
+                style={styles.signUpButton}
+                onPress={handleSignUp}
+                activeOpacity={0.8}
+                disabled={loading}
               >
-                <Text style={styles.linkText}>
-                  Already have an account? <Text style={styles.linkTextBold}>Sign In</Text>
-                </Text>
+                <LinearGradient
+                  colors={['#b366ff', '#8b3dc7', '#6a2c96']}
+                  start={{ x: 0, y: 0 }}
+                  end={{ x: 1, y: 0 }}
+                  style={styles.buttonGradient}
+                >
+                  <Text style={styles.signUpText}>
+                    {loading ? 'CREATING ACCOUNT...' : 'SIGN UP'}
+                  </Text>
+                </LinearGradient>
               </TouchableOpacity>
-            </Card.Content>
-          </Card>
+
+              <View style={styles.loginLink}>
+                <Text style={styles.linkText}>Already have an account? </Text>
+                <TouchableOpacity onPress={() => navigation.navigate('Login')}>
+                  <Text style={styles.linkTextBold}>Sign In</Text>
+                </TouchableOpacity>
+              </View>
+            </View>
           </Animated.View>
         </ScrollView>
       </LinearGradient>
@@ -382,25 +430,95 @@ export default function SignUpScreen({ navigation }) {
   );
 }
 
+const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
+
 const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+  },
+  gradient: {
+    flex: 1,
+  },
+  worldMap: {
+    position: 'absolute',
+    width: screenWidth,
+    height: screenHeight * 0.4,
+    top: screenHeight * 0.15,
+    opacity: 0.15,
+  },
+  scrollContainer: {
+    flexGrow: 1,
+    paddingHorizontal: screenWidth > 400 ? 25 : 20,
+    paddingTop: Platform.OS === 'ios' ? 60 : 50,
+    paddingBottom: 40,
+    minHeight: screenHeight,
+  },
+  header: {
+    marginBottom: screenHeight > 700 ? 40 : 30,
+    position: 'relative',
+  },
+  backButton: {
+    position: 'absolute',
+    left: 0,
+    top: 0,
+    padding: 10,
+    zIndex: 10,
+  },
+  welcomeText: {
+    fontSize: screenWidth > 400 ? 38 : 32,
+    fontWeight: '300',
+    color: '#fff',
+    letterSpacing: 1,
+    textAlign: 'center',
+  },
+  accountText: {
+    fontSize: screenWidth > 400 ? 38 : 32,
+    fontWeight: 'bold',
+    color: '#b366ff',
+    letterSpacing: 1,
+    marginTop: -8,
+    textAlign: 'center',
+  },
+  card: {
+    width: '100%',
+  },
+  inputContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'rgba(255, 255, 255, 0.08)',
+    borderRadius: 15,
+    marginBottom: screenHeight > 700 ? 18 : 15,
+    paddingHorizontal: 15,
+    height: screenHeight > 700 ? 58 : 55,
+  },
+  inputIconContainer: {
+    marginRight: 10,
+  },
+  input: {
+    flex: 1,
+    backgroundColor: 'transparent',
+    fontSize: screenWidth > 400 ? 16 : 14,
+    color: '#fff',
+  },
+  eyeIcon: {
+    padding: 5,
+  },
   dropdownContainer: {
-    marginBottom: 20,
+    marginBottom: screenHeight > 700 ? 18 : 15,
+  },
+  sectionTitle: {
+    fontSize: screenWidth > 400 ? 15 : 14,
+    fontWeight: '600',
+    color: '#fff',
+    marginBottom: 12,
+    letterSpacing: 0.5,
   },
   dropdownButton: {
-    borderWidth: 1,
-    borderColor: 'rgba(224, 224, 224, 0.5)',
-    borderRadius: 12,
-    backgroundColor: 'rgba(255, 255, 255, 0.75)',
-    padding: 12,
-    marginTop: 8,
-    elevation: 2,
-    shadowColor: '#4c669f',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 3,
-  },
-  dropdownButtonSelected: {
-    borderColor: '#4c669f',
+    backgroundColor: 'rgba(255, 255, 255, 0.08)',
+    borderRadius: 15,
+    paddingHorizontal: 15,
+    height: screenHeight > 700 ? 58 : 55,
+    justifyContent: 'center',
   },
   dropdownButtonContent: {
     flexDirection: 'row',
@@ -408,36 +526,31 @@ const styles = StyleSheet.create({
   },
   dropdownSelectedText: {
     flex: 1,
-    fontSize: 16,
-    color: '#333',
-    marginLeft: 12,
+    fontSize: screenWidth > 400 ? 16 : 14,
+    color: '#fff',
+    marginLeft: 10,
   },
   dropdownPlaceholder: {
     flex: 1,
-    fontSize: 16,
+    fontSize: screenWidth > 400 ? 16 : 14,
     color: '#999',
+    marginLeft: 10,
   },
   dropdownList: {
-    position: 'relative',
-    backgroundColor: 'rgba(255, 255, 255, 0.95)',
-    borderRadius: 12,
-    marginTop: 8,
-    elevation: 6,
-    shadowColor: '#192f6a',
-    shadowOffset: { width: 0, height: 3 },
-    shadowOpacity: 0.25,
-    shadowRadius: 5,
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.25)',
-    backdropFilter: 'blur(8px)',
+    backgroundColor: 'rgba(40, 40, 70, 0.95)',
+    borderRadius: 15,
+    marginTop: 10,
+    overflow: 'hidden',
+    elevation: 8,
+    maxHeight: screenHeight * 0.5,
   },
   dropdownItem: {
-    padding: 12,
+    padding: screenHeight > 700 ? 15 : 12,
     borderBottomWidth: 1,
-    borderBottomColor: '#f0f0f0',
+    borderBottomColor: 'rgba(255, 255, 255, 0.1)',
   },
   dropdownItemSelected: {
-    backgroundColor: 'rgba(76, 102, 159, 0.1)',
+    backgroundColor: 'rgba(179, 102, 255, 0.2)',
   },
   dropdownItemContent: {
     flexDirection: 'row',
@@ -448,183 +561,56 @@ const styles = StyleSheet.create({
     marginLeft: 12,
   },
   dropdownItemLabel: {
-    fontSize: 16,
-    fontWeight: '500',
-    color: '#333',
+    fontSize: screenWidth > 400 ? 16 : 14,
+    fontWeight: '600',
+    color: '#fff',
     marginBottom: 4,
   },
   dropdownItemLabelSelected: {
-    color: '#4c669f',
+    color: '#b366ff',
   },
   dropdownItemDescription: {
-    fontSize: 13,
-    color: '#666',
-    lineHeight: 18,
-  },
-  container: {
-    flex: 1,
-    backgroundColor: '#000',
-  },
-  gradient: {
-    flex: 1,
-    backgroundColor: 'transparent',
-  },
-  scrollContainer: {
-    flexGrow: 1,
-    paddingHorizontal: 20,
-    paddingTop: Platform.OS === 'ios' ? 60 : 40,
-    paddingBottom: 40,
-    minHeight: Dimensions.get('window').height,
-  },
-  header: {
-    alignItems: 'center',
-    marginBottom: 30,
-    position: 'relative',
-  },
-  backButton: {
-    position: 'absolute',
-    left: 0,
-    top: 0,
-    padding: 5,
-  },
-  title: {
-    fontSize: 24,
-    fontWeight: 'bold',
-    color: '#fff',
-    textAlign: 'center',
-    marginBottom: 5,
-  },
-  subtitle: {
-    fontSize: 14,
-    color: '#fff',
-    textAlign: 'center',
-    opacity: 0.9,
-  },
-  card: {
-    borderRadius: 24,
-    elevation: 12,
-    shadowColor: '#192f6a',
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.35,
-    shadowRadius: 8,
-    marginHorizontal: 2,
-    backgroundColor: 'rgba(255, 255, 255, 0.85)',
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.25)',
-    backdropFilter: 'blur(16px)',
-    padding: 8,
-  },
-  cardHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 25,
-    paddingVertical: 10,
-    borderBottomWidth: 1,
-    borderBottomColor: '#f0f0f0',
-  },
-  cardTitle: {
-    fontSize: 22,
-    fontWeight: 'bold',
-    marginLeft: 10,
-    color: '#333',
-  },
-  input: {
-    marginBottom: 20,
-    backgroundColor: 'rgba(255, 255, 255, 0.75)',
-    fontSize: 16,
-    borderRadius: 12,
-    overflow: 'hidden',
-    elevation: 2,
-    shadowColor: '#4c669f',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 3,
-  },
-  sectionTitle: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    color: '#333',
-    marginBottom: 15,
-    marginTop: 10,
-  },
-  roleOption: {
-    borderWidth: 1.5,
-    borderColor: 'rgba(224, 224, 224, 0.5)',
-    borderRadius: 16,
-    padding: 16,
-    marginBottom: 12,
-    backgroundColor: 'rgba(255, 255, 255, 0.9)',
-    elevation: 3,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.15,
-    shadowRadius: 3,
-    transform: [{scale: 1}],
-  },
-  selectedRole: {
-    borderColor: '#667eea',
-    backgroundColor: '#f8f9ff',
-    elevation: 4,
-    shadowOpacity: 0.15,
-    shadowRadius: 3,
-  },
-  roleContent: {
-    flex: 1,
-  },
-  roleHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 8,
-  },
-  roleLabel: {
-    flex: 1,
-    fontSize: 17,
-    fontWeight: '600',
-    marginLeft: 12,
-    color: '#333',
-  },
-  selectedRoleLabel: {
-    color: '#667eea',
-  },
-  roleDescription: {
-    fontSize: 13,
-    color: '#666',
-    marginLeft: 34,
+    fontSize: screenWidth > 400 ? 13 : 12,
+    color: '#999',
     lineHeight: 18,
   },
   signUpButton: {
-    marginTop: 25,
-    marginBottom: 20,
-    backgroundColor: '#4c669f',
-    borderRadius: 16,
+    width: '100%',
+    height: screenHeight > 700 ? 60 : 55,
+    borderRadius: 30,
+    overflow: 'hidden',
+    marginTop: screenHeight > 700 ? 25 : 20,
     elevation: 8,
-    shadowColor: '#192f6a',
+    shadowColor: '#b366ff',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.5,
     shadowRadius: 8,
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.2)',
-    overflow: 'hidden',
   },
-  buttonContent: {
-    paddingVertical: 10,
+  buttonGradient: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
-  buttonLabel: {
-    fontSize: 17,
+  signUpText: {
+    fontSize: screenWidth > 400 ? 18 : 16,
     fontWeight: 'bold',
-    letterSpacing: 0.5,
+    color: '#fff',
+    letterSpacing: 2,
   },
   loginLink: {
+    flexDirection: 'row',
+    justifyContent: 'center',
     alignItems: 'center',
-    paddingVertical: 15,
-    marginTop: 5,
+    marginTop: screenHeight > 700 ? 25 : 20,
+    flexWrap: 'wrap',
   },
   linkText: {
-    color: '#666',
-    fontSize: 15,
+    color: '#999',
+    fontSize: screenWidth > 400 ? 14 : 13,
   },
   linkTextBold: {
-    color: '#667eea',
+    color: '#b366ff',
+    fontSize: screenWidth > 400 ? 14 : 13,
     fontWeight: 'bold',
   },
 });

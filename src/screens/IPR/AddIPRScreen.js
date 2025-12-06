@@ -6,13 +6,16 @@ import {
   ScrollView,
   Alert,
   KeyboardAvoidingView,
-  Platform
+  Platform,
+  Dimensions
 } from 'react-native';
 import { Title, Button, Chip } from 'react-native-paper';
 import { LinearGradient } from 'expo-linear-gradient';
+import { Ionicons } from '@expo/vector-icons';
 import { doc, addDoc, updateDoc, getDoc, collection } from 'firebase/firestore';
 import { db } from '../../config/firebaseConfig';
 import { useAuth } from '../../context/AuthContext';
+import { useTheme } from '../../context/ThemeContext';
 import { 
   FormSection, 
   FormInput, 
@@ -22,6 +25,8 @@ import {
   FileUpload, 
   FormActions 
 } from '../../components/FormComponents';
+
+const { width } = Dimensions.get('window');
 
 const IPR_TYPES = [
   { label: 'Patent', value: 'Patent' },
@@ -274,15 +279,19 @@ export default function AddIPRScreen({ route, navigation }) {
       style={styles.container} 
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
     >
-      {/* Header */}
       <LinearGradient
-        colors={['#FF9800', '#F57C00']}
-        style={styles.header}
+        colors={['#1a1a2e', '#16213e', '#0f1419']}
+        style={styles.gradient}
       >
-        <Title style={styles.headerTitle}>
-          {editMode ? 'Edit IPR Application' : 'Submit IPR Application'}
-        </Title>
-      </LinearGradient>
+        {/* Header */}
+        <View style={styles.header}>
+          <Title style={styles.headerTitle}>
+            {editMode ? 'Edit IPR Application' : 'Submit IPR Application'}
+          </Title>
+          <Text style={styles.headerSubtitle}>
+            {editMode ? 'Update your application details' : 'Protect your intellectual property'}
+          </Text>
+        </View>
 
       <ScrollView style={styles.content}>
         {/* Basic Information */}
@@ -618,6 +627,7 @@ export default function AddIPRScreen({ route, navigation }) {
           loading={loading}
         />
       </ScrollView>
+      </LinearGradient>
     </KeyboardAvoidingView>
   );
 }
@@ -625,18 +635,25 @@ export default function AddIPRScreen({ route, navigation }) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f5f5f5',
+    backgroundColor: '#0f1419',
+  },
+  gradient: {
+    flex: 1,
   },
   header: {
-    paddingTop: 40,
-    paddingBottom: 20,
+    paddingTop: 20,
+    paddingBottom: 15,
     paddingHorizontal: 20,
-    alignItems: 'center',
   },
   headerTitle: {
-    fontSize: 20,
+    fontSize: 24,
     fontWeight: 'bold',
     color: '#fff',
+    marginBottom: 4,
+  },
+  headerSubtitle: {
+    fontSize: 14,
+    color: '#ddd',
   },
   content: {
     flex: 1,
@@ -644,50 +661,55 @@ const styles = StyleSheet.create({
   },
   errorText: {
     fontSize: 12,
-    color: '#f44336',
+    color: '#ff6b6b',
     marginBottom: 8,
   },
   inventorContainer: {
-    backgroundColor: '#f8f9fa',
-    borderRadius: 8,
-    padding: 12,
+    backgroundColor: 'rgba(179, 102, 255, 0.1)',
+    borderRadius: 12,
+    padding: 16,
     marginBottom: 12,
+    borderWidth: 1,
+    borderColor: 'rgba(179, 102, 255, 0.2)',
   },
   inventorHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 8,
+    marginBottom: 12,
   },
   inventorTitle: {
     fontSize: 14,
     fontWeight: 'bold',
-    color: '#333',
+    color: '#fff',
   },
   claimContainer: {
-    backgroundColor: '#f8f9fa',
-    borderRadius: 8,
-    padding: 12,
+    backgroundColor: 'rgba(179, 102, 255, 0.1)',
+    borderRadius: 12,
+    padding: 16,
     marginBottom: 12,
+    borderWidth: 1,
+    borderColor: 'rgba(179, 102, 255, 0.2)',
   },
   claimHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 8,
+    marginBottom: 12,
   },
   claimTitle: {
     fontSize: 14,
     fontWeight: 'bold',
-    color: '#333',
+    color: '#fff',
   },
   addButton: {
-    marginTop: 8,
-    borderColor: '#667eea',
+    marginTop: 12,
+    borderColor: '#b366ff',
+    borderWidth: 2,
   },
   helpText: {
     fontSize: 12,
-    color: '#666',
+    color: '#999',
     marginTop: 8,
     lineHeight: 16,
   },
@@ -702,11 +724,11 @@ const styles = StyleSheet.create({
   switchLabel: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#333',
+    color: '#fff',
     marginBottom: 4,
   },
   switchDescription: {
     fontSize: 14,
-    color: '#666',
+    color: '#999',
   },
 });

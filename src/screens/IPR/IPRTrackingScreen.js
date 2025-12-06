@@ -1,13 +1,16 @@
 import React, { useState, useEffect } from 'react';
 import { View, StyleSheet } from 'react-native';
-import { collection, query, where, orderBy, onSnapshot } from 'firebase/firestore';
+import { LinearGradient } from 'expo-linear-gradient';
+import { doc, onSnapshot } from 'firebase/firestore';
 import { db } from '../../config/firebaseConfig';
 import { useAuth, USER_ROLES } from '../../context/AuthContext';
+import { useTheme } from '../../context/ThemeContext';
 import { IPRTrackingComponent } from '../../components/IPRTrackingComponent';
-import { LoadingCard } from '../../components/UIComponents';
+import { LoadingCard, EmptyState } from '../../components/UIComponents';
 
 export default function IPRTrackingScreen({ route }) {
   const { currentUser, userProfile } = useAuth();
+  const { isDarkMode } = useTheme();
   const [application, setApplication] = useState(null);
   const [loading, setLoading] = useState(true);
   const { applicationId } = route.params;
@@ -15,7 +18,7 @@ export default function IPRTrackingScreen({ route }) {
   useEffect(() => {
     if (!applicationId) return;
 
-    const iprRef = doc(db, 'ipr_applications', applicationId);
+    const iprRef = doc(db, 'ipr', applicationId);
     
     const unsubscribe = onSnapshot(iprRef, (doc) => {
       if (doc.exists()) {
@@ -30,7 +33,12 @@ export default function IPRTrackingScreen({ route }) {
   if (loading) {
     return (
       <View style={styles.container}>
-        <LoadingCard />
+        <LinearGradient
+          colors={['#1a1a2e', '#16213e', '#0f1419']}
+          style={styles.gradient}
+        >
+          <LoadingCard />
+        </LinearGradient>
       </View>
     );
   }
@@ -38,11 +46,16 @@ export default function IPRTrackingScreen({ route }) {
   if (!application) {
     return (
       <View style={styles.container}>
-        <EmptyState
-          icon="alert-circle-outline"
-          title="Application Not Found"
-          description="The IPR application you're looking for doesn't exist or you don't have permission to view it."
-        />
+        <LinearGradient
+          colors={['#1a1a2e', '#16213e', '#0f1419']}
+          style={styles.gradient}
+        >
+          <EmptyState
+            icon="alert-circle-outline"
+            title="Application Not Found"
+            description="The IPR application you're looking for doesn't exist or you don't have permission to view it."
+          />
+        </LinearGradient>
       </View>
     );
   }
@@ -51,10 +64,15 @@ export default function IPRTrackingScreen({ route }) {
 
   return (
     <View style={styles.container}>
-      <IPRTrackingComponent
-        application={application}
-        isGovernmentView={isGovernmentView}
-      />
+      <LinearGradient
+        colors={['#1a1a2e', '#16213e', '#0f1419']}
+        style={styles.gradient}
+      >
+        <IPRTrackingComponent
+          application={application}
+          isGovernmentView={isGovernmentView}
+        />
+      </LinearGradient>
     </View>
   );
 }
@@ -62,6 +80,9 @@ export default function IPRTrackingScreen({ route }) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f5f5f5',
+    backgroundColor: '#0f1419',
+  },
+  gradient: {
+    flex: 1,
   },
 });

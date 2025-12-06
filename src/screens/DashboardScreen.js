@@ -1,4 +1,5 @@
-import React, { useEffect, useState } from 'react';
+
+import React, { useEffect, useState, useMemo } from 'react';
 import {
   View,
   Text,
@@ -6,16 +7,20 @@ import {
   ScrollView,
   RefreshControl,
   TouchableOpacity,
-  Dimensions
+  Dimensions,
+  FlatList,
+  Platform
 } from 'react-native';
-import { Card, Title, Paragraph, Button, Avatar, Surface } from 'react-native-paper';
+import { Card, Title, Paragraph, Avatar, Surface } from 'react-native-paper';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuth, USER_ROLES } from '../context/AuthContext';
 import { collection, query, where, getDocs, orderBy, limit } from 'firebase/firestore';
 import { db } from '../config/firebaseConfig';
 
-const { width } = Dimensions.get('window');
+const { width, height } = Dimensions.get('window');
+const STAT_CARD_WIDTH = width > 600 ? (width - 70) / 4 : (width - 50) / 2;
+const isTablet = width > 600;
 
 export default function DashboardScreen({ navigation }) {
   const { userProfile, hasPermission, isRole } = useAuth();
@@ -23,12 +28,7 @@ export default function DashboardScreen({ navigation }) {
     recentResearch: [],
     recentIPR: [],
     recentStartups: [],
-    stats: {
-      totalResearch: 0,
-      totalIPR: 0,
-      totalStartups: 0,
-      totalFunding: 0
-    }
+    stats: { totalResearch: 0, totalIPR: 0, totalStartups: 0, totalFunding: 0 }
   });
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -42,19 +42,12 @@ export default function DashboardScreen({ navigation }) {
     await loadDashboardData();
     setRefreshing(false);
   }, []);
-  
+
   const loadStats = async () => {
     try {
-      // This would typically be cached or computed server-side for performance
-      const stats = {
-        totalResearch: 0,
-        totalIPR: 0,
-        totalStartups: 0,
-        totalFunding: 0
-      };
+      const stats = { totalResearch: 0, totalIPR: 0, totalStartups: 0, totalFunding: 0 };
 
       if (hasPermission('view_analytics')) {
-        // Load aggregated statistics
         const researchSnapshot = await getDocs(collection(db, 'research'));
         const iprSnapshot = await getDocs(collection(db, 'ipr'));
         const startupsSnapshot = await getDocs(collection(db, 'startups'));
@@ -63,10 +56,9 @@ export default function DashboardScreen({ navigation }) {
         stats.totalIPR = iprSnapshot.size;
         stats.totalStartups = startupsSnapshot.size;
 
-        // Calculate total funding
         startupsSnapshot.forEach(doc => {
           const data = doc.data();
-          if (data.funding) {
+          if (data?.funding) {
             stats.totalFunding += parseFloat(data.funding) || 0;
           }
         });
@@ -75,12 +67,7 @@ export default function DashboardScreen({ navigation }) {
       return stats;
     } catch (error) {
       console.error('Error loading stats:', error);
-      return {
-        totalResearch: 0,
-        totalIPR: 0,
-        totalStartups: 0,
-        totalFunding: 0
-      };
+      return { totalResearch: 0, totalIPR: 0, totalStartups: 0, totalFunding: 0 };
     }
   };
 
@@ -94,12 +81,7 @@ export default function DashboardScreen({ navigation }) {
         loadStats()
       ]);
 
-      setDashboardData({
-        recentResearch,
-        recentIPR,
-        recentStartups,
-        stats
-      });
+      setDashboardData({ recentResearch, recentIPR, recentStartups, stats });
     } catch (error) {
       console.error('Error loading dashboard data:', error);
     } finally {
@@ -111,7 +93,6 @@ export default function DashboardScreen({ navigation }) {
     try {
       let q;
       if (isRole(USER_ROLES.RESEARCHER)) {
-        // Show researcher's own projects
         q = query(
           collection(db, 'research'),
           where('userId', '==', userProfile.uid),
@@ -119,14 +100,8 @@ export default function DashboardScreen({ navigation }) {
           limit(3)
         );
       } else if (hasPermission('view_all_data')) {
-        // Show all recent research for government officials
-        q = query(
-          collection(db, 'research'),
-          orderBy('createdAt', 'desc'),
-          limit(5)
-        );
+        q = query(collection(db, 'research'), orderBy('createdAt', 'desc'), limit(5));
       } else {
-        // Show public research
         q = query(
           collection(db, 'research'),
           where('isPublic', '==', true),
@@ -154,11 +129,7 @@ export default function DashboardScreen({ navigation }) {
           limit(3)
         );
       } else if (hasPermission('view_all_data')) {
-        q = query(
-          collection(db, 'ipr'),
-          orderBy('createdAt', 'desc'),
-          limit(5)
-        );
+        q = query(collection(db, 'ipr'), orderBy('createdAt', 'desc'), limit(5));
       } else {
         q = query(
           collection(db, 'ipr'),
@@ -187,11 +158,7 @@ export default function DashboardScreen({ navigation }) {
           limit(3)
         );
       } else if (hasPermission('view_all_data') || isRole(USER_ROLES.INVESTOR)) {
-        q = query(
-          collection(db, 'startups'),
-          orderBy('createdAt', 'desc'),
-          limit(5)
-        );
+        q = query(collection(db, 'startups'), orderBy('createdAt', 'desc'), limit(5));
       } else {
         q = query(
           collection(db, 'startups'),
@@ -219,283 +186,308 @@ export default function DashboardScreen({ navigation }) {
     const actions = [];
 
     if (hasPermission('submit_research')) {
-      actions.push({
-        title: 'Submit Research',
-        icon: 'flask-outline',
-        color: '#4CAF50',
-        onPress: () => navigation.navigate('Research', { screen: 'AddResearch' })
-      });
+      actions.push({ title: 'Submit Research', icon: 'flask', color: ['#36D1DC', '#5B86E5'], onPress: () => navigation.navigate('Research', { screen: 'AddResearch' }) });
     }
 
     if (hasPermission('submit_ipr')) {
-      actions.push({
-        title: 'Apply for IPR',
-        icon: 'shield-checkmark-outline',
-        color: '#FF9800',
-        onPress: () => navigation.navigate('IPR', { screen: 'AddIPR' })
-      });
+      actions.push({ title: 'Apply for IPR', icon: 'shield-checkmark', color: ['#F7971E', '#FFD200'], onPress: () => navigation.navigate('IPR', { screen: 'AddIPR' }) });
     }
 
     if (hasPermission('submit_idea')) {
-      actions.push({
-        title: 'Submit Idea',
-        icon: 'bulb-outline',
-        color: '#2196F3',
-        onPress: () => navigation.navigate('Innovation', { screen: 'IdeaSubmission' })
-      });
+      actions.push({ title: 'Submit Idea', icon: 'bulb', color: ['#7F00FF', '#E100FF'], onPress: () => navigation.navigate('Innovation', { screen: 'IdeaSubmission' }) });
     }
 
     if (hasPermission('submit_startup')) {
-      actions.push({
-        title: 'Register Startup',
-        icon: 'rocket-outline',
-        color: '#9C27B0',
-        onPress: () => navigation.navigate('Startups', { screen: 'RegisterStartup' })
-      });
+      actions.push({ title: 'Register Startup', icon: 'rocket', color: ['#FF5F6D', '#FFC371'], onPress: () => navigation.navigate('Startups', { screen: 'RegisterStartup' }) });
     }
 
     return actions;
   };
 
-  const QuickStatsCard = ({ title, value, icon, color }) => (
-    <Surface style={[styles.statCard, { borderLeftColor: color }]}>
-      <View style={styles.statContent}>
-        <View style={styles.statInfo}>
-          <Text style={styles.statValue}>{value}</Text>
-          <Text style={styles.statTitle}>{title}</Text>
-        </View>
-        <Ionicons name={icon} size={24} color={color} />
+  const formatINR = (amount) => {
+    if (!amount) return '₹0';
+    // show in crores if large
+    if (amount >= 1e7) return `₹${(amount / 1e7).toFixed(1)} Cr`;
+    if (amount >= 1e5) return `₹${(amount / 1e5).toFixed(1)} L`;
+    return `₹${amount}`;
+  };
+
+  const StatCard = ({ title, value, icon }) => (
+    <View style={styles.statCard}>
+      <View style={styles.statIconContainer}>
+        <Ionicons name={icon} size={26} color="#b366ff" />
       </View>
-    </Surface>
+      <View style={styles.statContent}>
+        <Text style={styles.statValue}>{value}</Text>
+        <Text style={styles.statTitle}>{title}</Text>
+      </View>
+    </View>
   );
 
-  const ActionButton = ({ title, icon, color, onPress }) => (
-    <TouchableOpacity style={styles.actionButton} onPress={onPress}>
+  const ActionButton = ({ item }) => (
+    <TouchableOpacity style={styles.actionButton} onPress={item.onPress} activeOpacity={0.8}>
       <LinearGradient
-        colors={[color, `${color}80`]}
+        colors={['#b366ff', '#8b3dc7', '#6a2c96']}
         style={styles.actionGradient}
       >
-        <Ionicons name={icon} size={24} color="#fff" />
-        <Text style={styles.actionText}>{title}</Text>
+        <Ionicons name={item.icon} size={24} color="#fff" />
+        <Text style={styles.actionText}>{item.title}</Text>
       </LinearGradient>
     </TouchableOpacity>
   );
 
-  return (
-    <ScrollView
-      style={styles.container}
-      refreshControl={
-        <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
-      }
+  const RecentCard = ({ item, type }) => (
+    <TouchableOpacity
+      style={styles.recentCard}
+      activeOpacity={0.7}
+      onPress={() => {
+        if (type === 'ipr') navigation.navigate('IPRDetail', { iprId: item.id });
+        if (type === 'startup') navigation.navigate('Startups', { screen: 'StartupDetail', params: { startupId: item.id } });
+      }}
     >
-      {/* Header */}
       <LinearGradient
-        colors={['#667eea', '#764ba2']}
-        style={styles.header}
+        colors={['rgba(179, 102, 255, 0.15)', 'rgba(179, 102, 255, 0.05)']}
+        style={styles.recentCardGradient}
       >
-        <View style={styles.headerContent}>
-          <View style={styles.welcomeSection}>
-            <Text style={styles.welcomeText}>{getWelcomeMessage()}</Text>
-            <Text style={styles.roleText}>{userProfile?.role?.replace('_', ' ').toUpperCase()}</Text>
+        <View style={styles.cardTopRow}>
+          <View style={styles.iconBadge}>
+            <Ionicons 
+              name={type === 'ipr' ? 'shield-checkmark' : type === 'startup' ? 'rocket' : 'flask'} 
+              size={16} 
+              color="#b366ff" 
+            />
           </View>
-          <Avatar.Text 
-            size={50} 
-            label={userProfile?.name?.charAt(0) || 'U'} 
-            style={styles.avatar}
-          />
+          <View style={styles.statusBadge}>
+            <Text style={styles.statusBadgeText}>{(item.status || item.stage || 'N/A')}</Text>
+          </View>
+        </View>
+        
+        <Text style={styles.recentTitle} numberOfLines={1}>{item.title || item.name}</Text>
+        <Text style={styles.recentDescription} numberOfLines={2}>
+          {(item.description || 'No description available').trim()}
+        </Text>
+        
+        <View style={styles.cardBottomRow}>
+          <Ionicons name="time-outline" size={11} color="#999" />
+          <Text style={styles.recentDate}>
+            {item.createdAt ? new Date(item.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : '-'}
+          </Text>
         </View>
       </LinearGradient>
+    </TouchableOpacity>
+  );
 
-      <View style={styles.content}>
-        {/* Quick Stats */}
+  const actions = useMemo(() => getRoleSpecificActions(), [userProfile]);
+
+  return (
+    <LinearGradient
+      colors={['#1a1a3e', '#2d2d5f', '#1a1a3e']}
+      style={styles.container}
+    >
+      <ScrollView 
+        showsVerticalScrollIndicator={false}
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
+      >
+        {/* Header Section */}
+        <View style={styles.header}>
+          <View style={styles.headerTop}>
+            <View style={styles.welcomeSection}>
+              <Text style={styles.welcomeText}>{getWelcomeMessage()}</Text>
+              <Text style={styles.roleText}>{userProfile?.role?.replace('_', ' ').toUpperCase()}</Text>
+            </View>
+            <TouchableOpacity
+              onPress={() => navigation.navigate('Profile')}
+              activeOpacity={0.7}
+            >
+              <Avatar.Text 
+                size={50} 
+                label={userProfile?.name?.charAt(0) || 'U'} 
+                style={styles.avatar}
+              />
+            </TouchableOpacity>
+          </View>
+        </View>        {/* Stats Grid */}
         {hasPermission('view_analytics') && (
-          <View style={styles.section}>
-            <Title style={styles.sectionTitle}>Overview</Title>
+          <View style={styles.statsContainer}>
+            <Text style={styles.sectionTitle}>Overview</Text>
             <View style={styles.statsGrid}>
-              <QuickStatsCard
-                title="Research Projects"
+              <StatCard
+                title="Research"
                 value={dashboardData.stats.totalResearch}
                 icon="flask-outline"
-                color="#4CAF50"
               />
-              <QuickStatsCard
-                title="IPR Applications"
+              <StatCard
+                title="IPR"
                 value={dashboardData.stats.totalIPR}
                 icon="shield-checkmark-outline"
-                color="#FF9800"
               />
-              <QuickStatsCard
+              <StatCard
                 title="Start-ups"
                 value={dashboardData.stats.totalStartups}
                 icon="rocket-outline"
-                color="#2196F3"
               />
-              <QuickStatsCard
-                title="Total Funding"
-                value={`₹${(dashboardData.stats.totalFunding / 10000000).toFixed(1)}Cr`}
+              <StatCard
+                title="Funding"
+                value={formatINR(dashboardData.stats.totalFunding)}
                 icon="cash-outline"
-                color="#9C27B0"
               />
             </View>
           </View>
         )}
 
         {/* Quick Actions */}
-        <View style={styles.section}>
-          <Title style={styles.sectionTitle}>Quick Actions</Title>
-          <View style={styles.actionsGrid}>
-            {getRoleSpecificActions().map((action, index) => (
-              <ActionButton
-                key={index}
-                title={action.title}
-                icon={action.icon}
-                color={action.color}
-                onPress={action.onPress}
-              />
-            ))}
+        {actions.length > 0 && (
+          <View style={styles.actionsContainer}>
+            <Text style={styles.sectionTitle}>Quick Actions</Text>
+            <View style={styles.actionsGrid}>
+              {actions.map((action, index) => (
+                <ActionButton key={index} item={action} />
+              ))}
+            </View>
           </View>
-        </View>
+        )}
 
-        {/* Recent Activity */}
+        {/* Recent Research */}
         {dashboardData.recentResearch.length > 0 && (
-          <View style={styles.section}>
-            <Title style={styles.sectionTitle}>Recent Research</Title>
-            {dashboardData.recentResearch.map((research) => (
-              <Card key={research.id} style={styles.activityCard}>
-                <Card.Content>
-                  <Title style={styles.cardTitle}>{research.title}</Title>
-                  <Paragraph numberOfLines={2}>{research.description}</Paragraph>
-                  <View style={styles.cardFooter}>
-                    <Text style={styles.cardDate}>
-                      {new Date(research.createdAt).toLocaleDateString()}
-                    </Text>
-                    <Text style={[styles.cardStatus, { color: research.status === 'completed' ? '#4CAF50' : '#FF9800' }]}>
-                      {research.status}
-                    </Text>
-                  </View>
-                </Card.Content>
-              </Card>
-            ))}
+          <View style={styles.recentSection}>
+            <View style={styles.sectionHeader}>
+              <View style={styles.sectionTitleContainer}>
+                <Text style={styles.sectionTitle}>Recent Research</Text>
+                <Ionicons name="arrow-forward-circle-outline" size={20} color="#b366ff" style={styles.scrollIcon} />
+              </View>
+              <TouchableOpacity onPress={() => navigation.navigate('Research', { screen: 'ResearchList' })}>
+                <Text style={styles.viewAllText}>View All</Text>
+              </TouchableOpacity>
+            </View>
+            <ScrollView 
+              horizontal 
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={styles.horizontalScroll}
+            >
+              {dashboardData.recentResearch.map((item) => (
+                <RecentCard key={item.id} item={item} type="research" />
+              ))}
+            </ScrollView>
           </View>
         )}
 
         {/* Recent IPR */}
         {dashboardData.recentIPR.length > 0 && (
-          <View style={styles.section}>
-            <Title style={styles.sectionTitle}>Recent IPR Applications</Title>
-            {dashboardData.recentIPR.map((ipr) => (
-              <Card 
-                key={ipr.id} 
-                style={styles.activityCard}
-                onPress={() => navigation.navigate('IPRDetail', { iprId: ipr.id })}
-              >
-                <Card.Content>
-                  <Title style={styles.cardTitle}>{ipr.title}</Title>
-                  <Paragraph numberOfLines={2}>{ipr.description}</Paragraph>
-                  <View style={styles.cardFooter}>
-                    <Text style={styles.cardDate}>
-                      {new Date(ipr.createdAt).toLocaleDateString()}
-                    </Text>
-                    <View style={styles.cardActions}>
-                      <Text style={[styles.cardStatus, { color: ipr.status === 'approved' ? '#4CAF50' : '#FF9800' }]}>
-                        {ipr.status}
-                      </Text>
-                      <TouchableOpacity 
-                        style={styles.viewDetailsButton}
-                        onPress={() => navigation.navigate('IPRDetail', { iprId: ipr.id })}
-                      >
-                        <Ionicons name="information-circle-outline" size={16} color="#FF9800" />
-                        <Text style={styles.viewDetailsText}>View Details</Text>
-                      </TouchableOpacity>
-                    </View>
-                  </View>
-                </Card.Content>
-              </Card>
-            ))}
+          <View style={styles.recentSection}>
+            <View style={styles.sectionHeader}>
+              <View style={styles.sectionTitleContainer}>
+                <Text style={styles.sectionTitle}>Recent IPR Applications</Text>
+                <Ionicons name="arrow-forward-circle-outline" size={20} color="#b366ff" style={styles.scrollIcon} />
+              </View>
+              <TouchableOpacity onPress={() => navigation.navigate('IPR', { screen: 'IPRList' })}>
+                <Text style={styles.viewAllText}>View All</Text>
+              </TouchableOpacity>
+            </View>
+            <ScrollView 
+              horizontal 
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={styles.horizontalScroll}
+            >
+              {dashboardData.recentIPR.map((item) => (
+                <RecentCard key={item.id} item={item} type="ipr" />
+              ))}
+            </ScrollView>
           </View>
         )}
 
         {/* Recent Startups */}
         {dashboardData.recentStartups.length > 0 && (
-          <View style={styles.section}>
-            <Title style={styles.sectionTitle}>Recent Start-ups</Title>
-            {dashboardData.recentStartups.map((startup) => (
-              <Card 
-                key={startup.id} 
-                style={styles.activityCard}
-                onPress={() => navigation.navigate('Startups', { screen: 'StartupDetail', params: { startupId: startup.id } })}
-              >
-                <Card.Content>
-                  <Title style={styles.cardTitle}>{startup.name}</Title>
-                  <Paragraph numberOfLines={2}>{startup.description}</Paragraph>
-                  <View style={styles.cardFooter}>
-                    <Text style={styles.cardDate}>
-                      {new Date(startup.createdAt).toLocaleDateString()}
-                    </Text>
-                    <TouchableOpacity 
-                      style={styles.viewDetailsButton}
-                      onPress={() => navigation.navigate('Startups', { screen: 'StartupDetail', params: { startupId: startup.id } })}
-                    >
-                      <Ionicons name="information-circle-outline" size={16} color="#E91E63" />
-                      <Text style={styles.viewDetailsText}>View Details</Text>
-                    </TouchableOpacity>
-                    <Text style={[styles.cardStatus, { color: startup.stage === 'growth' ? '#4CAF50' : '#2196F3' }]}>
-                      {startup.stage}
-                    </Text>
-                  </View>
-                </Card.Content>
-              </Card>
-            ))}
+          <View style={styles.recentSection}>
+            <View style={styles.sectionHeader}>
+              <View style={styles.sectionTitleContainer}>
+                <Text style={styles.sectionTitle}>Recent Start-ups</Text>
+                <Ionicons name="arrow-forward-circle-outline" size={20} color="#b366ff" style={styles.scrollIcon} />
+              </View>
+              <TouchableOpacity onPress={() => navigation.navigate('Startups', { screen: 'StartupList' })}>
+                <Text style={styles.viewAllText}>View All</Text>
+              </TouchableOpacity>
+            </View>
+            <ScrollView 
+              horizontal 
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={styles.horizontalScroll}
+            >
+              {dashboardData.recentStartups.map((item) => (
+                <RecentCard key={item.id} item={item} type="startup" />
+              ))}
+            </ScrollView>
           </View>
         )}
-      </View>
-    </ScrollView>
+
+        {/* Empty State */}
+        {!loading && actions.length === 0 && dashboardData.recentResearch.length === 0 && 
+         dashboardData.recentIPR.length === 0 && dashboardData.recentStartups.length === 0 && (
+          <View style={styles.emptyState}>
+            <Ionicons name="document-text-outline" size={60} color="#666" />
+            <Text style={styles.emptyStateText}>No recent activity</Text>
+            <Text style={styles.emptyStateSubtext}>Start by submitting your first project</Text>
+          </View>
+        )}
+
+      </ScrollView>
+    </LinearGradient>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f5f5f5',
   },
+  
+  // Header Styles
   header: {
-    paddingTop: 40,
+    paddingTop: Platform.OS === 'ios' ? 50 : 40,
+    paddingHorizontal: isTablet ? 40 : 20,
     paddingBottom: 20,
-    paddingHorizontal: 20,
+    marginHorizontal: isTablet ? 0 : 8,
   },
-  headerContent: {
+  headerTop: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
+    marginBottom: 20,
   },
   welcomeSection: {
     flex: 1,
+    marginRight: 15,
   },
   welcomeText: {
-    fontSize: 24,
+    fontSize: isTablet ? 28 : 24,
     fontWeight: 'bold',
     color: '#fff',
     marginBottom: 5,
   },
   roleText: {
-    fontSize: 14,
-    color: '#fff',
+    fontSize: isTablet ? 15 : 13,
+    color: '#ddd',
     opacity: 0.9,
   },
   avatar: {
-    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    backgroundColor: 'rgba(179, 102, 255, 0.3)',
+    elevation: 4,
+    shadowColor: '#b366ff',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.4,
+    shadowRadius: 4,
   },
-  content: {
-    padding: 20,
-  },
-  section: {
-    marginBottom: 30,
+
+  // Stats Section
+  statsContainer: {
+    paddingHorizontal: isTablet ? 40 : 20,
+    marginTop: 20,
+    marginHorizontal: isTablet ? 0 : 8,
   },
   sectionTitle: {
-    fontSize: 20,
+    fontSize: isTablet ? 22 : 20,
     fontWeight: 'bold',
+    color: '#fff',
     marginBottom: 15,
-    color: '#333',
+    letterSpacing: 0.5,
   },
   statsGrid: {
     flexDirection: 'row',
@@ -503,30 +495,42 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
   },
   statCard: {
-    width: (width - 60) / 2,
-    padding: 15,
+    width: STAT_CARD_WIDTH,
+    backgroundColor: 'rgba(255, 255, 255, 0.08)',
+    borderRadius: 16,
+    padding: isTablet ? 18 : 15,
     marginBottom: 15,
-    borderRadius: 10,
     borderLeftWidth: 4,
-    elevation: 2,
+    borderLeftColor: '#b366ff',
+    elevation: 3,
+    shadowColor: '#b366ff',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 4,
+  },
+  statIconContainer: {
+    marginBottom: 10,
   },
   statContent: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  statInfo: {
-    flex: 1,
+    marginTop: 5,
   },
   statValue: {
-    fontSize: 24,
+    fontSize: isTablet ? 28 : 24,
     fontWeight: 'bold',
-    color: '#333',
+    color: '#fff',
+    marginBottom: 5,
   },
   statTitle: {
-    fontSize: 12,
-    color: '#666',
-    marginTop: 5,
+    fontSize: isTablet ? 13 : 12,
+    color: '#ddd',
+    opacity: 0.9,
+  },
+
+  // Actions Section
+  actionsContainer: {
+    paddingHorizontal: isTablet ? 40 : 20,
+    marginTop: 20,
+    marginHorizontal: isTablet ? 0 : 8,
   },
   actionsGrid: {
     flexDirection: 'row',
@@ -534,60 +538,150 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
   },
   actionButton: {
-    width: (width - 60) / 2,
+    width: isTablet ? (width - 100) / 3 : (width - 60) / 2,
     marginBottom: 15,
+    borderRadius: 16,
+    overflow: 'hidden',
+    shadowColor: '#b366ff',
+    shadowOpacity: 0.4,
+    shadowOffset: { width: 0, height: 4 },
+    shadowRadius: 6,
+    elevation: 5,
   },
   actionGradient: {
-    padding: 20,
-    borderRadius: 12,
+    paddingVertical: isTablet ? 25 : 20,
+    paddingHorizontal: 15,
     alignItems: 'center',
     justifyContent: 'center',
-    minHeight: 80,
+    minHeight: isTablet ? 120 : 100,
   },
   actionText: {
     color: '#fff',
-    fontSize: 14,
+    fontSize: isTablet ? 15 : 14,
     fontWeight: 'bold',
-    marginTop: 8,
+    marginTop: 10,
     textAlign: 'center',
+    letterSpacing: 0.3,
   },
-  activityCard: {
-    marginBottom: 15,
-    elevation: 2,
-    borderRadius: 10,
+
+  // Recent Sections
+  recentSection: {
+    marginTop: 25,
+    paddingLeft: isTablet ? 40 : 20,
+    marginLeft: isTablet ? 0 : 8,
   },
-  cardTitle: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    marginBottom: 5,
-  },
-  cardFooter: {
+  sectionHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginTop: 10,
+    marginBottom: 15,
+    paddingRight: isTablet ? 40 : 20,
+    marginRight: isTablet ? 0 : 8,
   },
-  cardDate: {
-    fontSize: 12,
-    color: '#666',
-  },
-  cardStatus: {
-    fontSize: 12,
-    fontWeight: 'bold',
-    textTransform: 'uppercase',
-  },
-  viewDetailsButton: {
+  sectionTitleContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#fafafa',
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 12,
   },
-  viewDetailsText: {
-    fontSize: 12,
-    color: '#666',
+  scrollIcon: {
+    marginLeft: 8,
+    opacity: 0.7,
+  },
+  viewAllText: {
+    color: '#b366ff',
+    fontSize: isTablet ? 15 : 14,
+    fontWeight: 'bold',
+  },
+  horizontalScroll: {
+    paddingRight: isTablet ? 40 : 20,
+    marginRight: isTablet ? 0 : 8,
+  },
+  recentCard: {
+    width: isTablet ? width * 0.35 : width * 0.55,
+    marginRight: 12,
+    borderRadius: 16,
+    overflow: 'hidden',
+    elevation: 5,
+    shadowColor: '#b366ff',
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.3,
+    shadowRadius: 5,
+  },
+  recentCardGradient: {
+    padding: isTablet ? 16 : 12,
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: 'rgba(179, 102, 255, 0.2)',
+  },
+  cardTopRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 10,
+  },
+  iconBadge: {
+    backgroundColor: 'rgba(179, 102, 255, 0.2)',
+    width: isTablet ? 36 : 32,
+    height: isTablet ? 36 : 32,
+    borderRadius: 10,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  recentTitle: {
+    fontSize: isTablet ? 15 : 14,
+    fontWeight: '700',
+    color: '#fff',
+    marginBottom: 6,
+    letterSpacing: 0.3,
+  },
+  recentDescription: {
+    fontSize: isTablet ? 12 : 11,
+    color: '#ccc',
+    marginBottom: 10,
+    lineHeight: isTablet ? 18 : 16,
+  },
+  cardBottomRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 4,
+  },
+  recentDate: {
+    fontSize: isTablet ? 11 : 10,
+    color: '#999',
     marginLeft: 4,
-    fontWeight: '600',
+  },
+  statusBadge: {
+    backgroundColor: 'rgba(179, 102, 255, 0.25)',
+    paddingHorizontal: isTablet ? 10 : 8,
+    paddingVertical: isTablet ? 4 : 3,
+    borderRadius: 8,
+  },
+  statusBadgeText: {
+    fontSize: isTablet ? 10 : 9,
+    fontWeight: '700',
+    color: '#b366ff',
+    letterSpacing: 0.8,
+    textTransform: 'uppercase',
+  },
+
+  // Empty State
+  emptyState: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: isTablet ? 80 : 60,
+    paddingHorizontal: isTablet ? 60 : 32,
+    marginHorizontal: isTablet ? 0 : 8,
+  },
+  emptyStateText: {
+    fontSize: isTablet ? 20 : 18,
+    fontWeight: 'bold',
+    color: '#999',
+    marginTop: 15,
+  },
+  emptyStateSubtext: {
+    fontSize: isTablet ? 15 : 14,
+    color: '#666',
+    marginTop: 8,
+    textAlign: 'center',
+    lineHeight: isTablet ? 22 : 20,
   },
 });

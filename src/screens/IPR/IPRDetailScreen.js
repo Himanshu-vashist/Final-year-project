@@ -6,7 +6,8 @@ import {
   ScrollView,
   TouchableOpacity,
   Alert,
-  Linking
+  Linking,
+  Dimensions
 } from 'react-native';
 import { Card, Title, Paragraph, Button, Chip, Divider } from 'react-native-paper';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -14,8 +15,11 @@ import { Ionicons } from '@expo/vector-icons';
 import { doc, getDoc, updateDoc, collection, addDoc, query, where, getDocs } from 'firebase/firestore';
 import { db } from '../../config/firebaseConfig';
 import { useAuth } from '../../context/AuthContext';
-import { StatusBadge, InfoCard } from '../../components/UIComponents';
+import { useTheme } from '../../context/ThemeContext';
+import { StatusBadge, InfoCard, LoadingSpinner } from '../../components/UIComponents';
 import moment from 'moment';
+
+const { width } = Dimensions.get('window');
 
 export default function IPRDetailScreen({ route, navigation }) {
   const { iprId } = route.params;
@@ -177,8 +181,13 @@ export default function IPRDetailScreen({ route, navigation }) {
 
   if (loading || !ipr) {
     return (
-      <View style={styles.loadingContainer}>
-        <Text>Loading...</Text>
+      <View style={styles.container}>
+        <LinearGradient
+          colors={['#1a1a2e', '#16213e', '#0f1419']}
+          style={styles.gradient}
+        >
+          <LoadingSpinner />
+        </LinearGradient>
       </View>
     );
   }
@@ -187,22 +196,24 @@ export default function IPRDetailScreen({ route, navigation }) {
   const statusActions = getStatusActions();
 
   return (
-    <ScrollView style={styles.container}>
-      {/* Header */}
+    <View style={styles.container}>
       <LinearGradient
-        colors={['#FF9800', '#F57C00']}
-        style={styles.header}
+        colors={['#1a1a2e', '#16213e', '#0f1419']}
+        style={styles.gradient}
       >
-        <View style={styles.headerContent}>
-          <Title style={styles.title}>{ipr.title}</Title>
-          <View style={styles.headerMeta}>
-            <StatusBadge status={ipr.status} type="ipr" />
-            <Chip mode="outlined" style={styles.typeChip} textStyle={styles.typeChipText}>
-              {ipr.type}
-            </Chip>
+        <ScrollView>
+          {/* Header */}
+          <View style={styles.header}>
+            <View style={styles.headerContent}>
+              <Title style={styles.title}>{ipr.title}</Title>
+              <View style={styles.headerMeta}>
+                <StatusBadge status={ipr.status} type="ipr" />
+                <Chip mode="outlined" style={styles.typeChip} textStyle={styles.typeChipText}>
+                  {ipr.type}
+                </Chip>
+              </View>
+            </View>
           </View>
-        </View>
-      </LinearGradient>
 
       <View style={styles.content}>
         {/* Basic Information */}
@@ -455,23 +466,23 @@ export default function IPRDetailScreen({ route, navigation }) {
           )}
         </View>
       </View>
-    </ScrollView>
+        </ScrollView>
+      </LinearGradient>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f5f5f5',
+    backgroundColor: '#0f1419',
   },
-  loadingContainer: {
+  gradient: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
   },
   header: {
-    paddingTop: 40,
-    paddingBottom: 30,
+    paddingTop: 20,
+    paddingBottom: 20,
     paddingHorizontal: 20,
   },
   headerContent: {
@@ -490,8 +501,8 @@ const styles = StyleSheet.create({
     gap: 12,
   },
   typeChip: {
-    backgroundColor: 'rgba(255, 255, 255, 0.2)',
-    borderColor: '#fff',
+    backgroundColor: 'rgba(179, 102, 255, 0.2)',
+    borderColor: '#b366ff',
   },
   typeChipText: {
     color: '#fff',
@@ -503,7 +514,7 @@ const styles = StyleSheet.create({
   description: {
     fontSize: 16,
     lineHeight: 24,
-    color: '#333',
+    color: '#ddd',
     marginBottom: 16,
   },
   infoRow: {
@@ -517,13 +528,13 @@ const styles = StyleSheet.create({
   },
   infoLabel: {
     fontSize: 12,
-    color: '#666',
+    color: '#999',
     fontWeight: '600',
     marginBottom: 4,
   },
   infoValue: {
     fontSize: 14,
-    color: '#333',
+    color: '#fff',
     fontWeight: '500',
   },
   technicalSection: {

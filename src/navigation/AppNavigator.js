@@ -3,16 +3,25 @@ import '../config/firebaseConfig';
 
 // React Navigation setup
 import React from 'react';
-import { NavigationContainer } from '@react-navigation/native';
+import { NavigationContainer, DefaultTheme, DarkTheme } from '@react-navigation/native';
 import { createStackNavigator } from '@react-navigation/stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createDrawerNavigator } from '@react-navigation/drawer';
 import { Ionicons } from '@expo/vector-icons';
+import { Dimensions, View } from 'react-native';
 
 // Import context
 import { AuthProvider, useAuth } from '../context/AuthContext';
+import { useTheme } from '../context/ThemeContext';
+
+// Import Sidebar
+import Sidebar from '../components/Sidebar';
+
+const { width } = Dimensions.get('window');
+const isDesktop = width >= 1024;
 
 // Import screens
+import WelcomeScreen from '../screens/WelcomeScreen';
 import LoginScreen from '../screens/LoginScreen';
 import SignUpScreen from '../screens/SignUpScreen';
 import HomeScreen from '../screens/HomeScreen';
@@ -45,7 +54,7 @@ const Stack = createStackNavigator();
 const Tab = createBottomTabNavigator();
 const Drawer = createDrawerNavigator();
 
-// Auth Stack (Login & SignUp)
+// Auth Stack (Welcome, Login & SignUp)
 function AuthStack() {
   return (
     <Stack.Navigator
@@ -53,6 +62,7 @@ function AuthStack() {
         headerShown: false,
       }}
     >
+      <Stack.Screen name="Welcome" component={WelcomeScreen} />
       <Stack.Screen name="Login" component={LoginScreen} />
       <Stack.Screen name="SignUp" component={SignUpScreen} />
     </Stack.Navigator>
@@ -61,22 +71,25 @@ function AuthStack() {
 
 // Research Stack
 function ResearchStack() {
+  const { theme } = useTheme();
+  
   return (
-    <Stack.Navigator>
+    <Stack.Navigator
+      screenOptions={{
+        headerShown: false,
+      }}
+    >
       <Stack.Screen 
         name="ResearchList" 
         component={ResearchListScreen}
-        options={{ title: 'Research Projects' }}
       />
       <Stack.Screen 
         name="ResearchDetail" 
         component={ResearchDetailScreen}
-        options={{ title: 'Research Details' }}
       />
       <Stack.Screen 
         name="AddResearch" 
         component={AddResearchScreen}
-        options={{ title: 'Add Research Project' }}
       />
     </Stack.Navigator>
   );
@@ -84,27 +97,29 @@ function ResearchStack() {
 
 // IPR Stack for Regular Users
 function IPRStack() {
+  const { theme } = useTheme();
+  
   return (
-    <Stack.Navigator>
+    <Stack.Navigator
+      screenOptions={{
+        headerShown: false,
+      }}
+    >
       <Stack.Screen 
         name="IPRList" 
         component={IPRListScreen}
-        options={{ title: 'IPR Applications' }}
       />
       <Stack.Screen 
         name="IPRDetail" 
         component={IPRDetailScreen}
-        options={{ title: 'IPR Details' }}
       />
       <Stack.Screen 
         name="AddIPR" 
         component={AddIPRScreen}
-        options={{ title: 'Submit IPR Application' }}
       />
       <Stack.Screen
         name="IPRTracking"
         component={IPRTrackingScreen}
-        options={{ title: 'Track IPR Application' }}
       />
     </Stack.Navigator>
   );
@@ -112,22 +127,25 @@ function IPRStack() {
 
 // Government IPR Management Stack
 function GovernmentIPRStack() {
+  const { theme } = useTheme();
+  
   return (
-    <Stack.Navigator>
+    <Stack.Navigator
+      screenOptions={{
+        headerShown: false,
+      }}
+    >
       <Stack.Screen 
         name="GovernmentIPRList" 
         component={GovernmentIPRScreen}
-        options={{ title: 'IPR Management' }}
       />
       <Stack.Screen 
         name="IPRDetail" 
         component={IPRDetailScreen}
-        options={{ title: 'IPR Details' }}
       />
       <Stack.Screen
         name="IPRTracking"
         component={IPRTrackingScreen}
-        options={{ title: 'IPR Application Status' }}
       />
     </Stack.Navigator>
   );
@@ -135,22 +153,25 @@ function GovernmentIPRStack() {
 
 // Innovation Stack
 function InnovationStack() {
+  const { theme } = useTheme();
+  
   return (
-    <Stack.Navigator>
+    <Stack.Navigator
+      screenOptions={{
+        headerShown: false,
+      }}
+    >
       <Stack.Screen 
         name="InnovationList" 
         component={InnovationListScreen}
-        options={{ title: 'Innovation Hub' }}
       />
       <Stack.Screen 
         name="InnovationDetail" 
         component={InnovationDetailScreen}
-        options={{ title: 'Innovation Details' }}
       />
       <Stack.Screen 
         name="AddInnovation" 
         component={AddInnovationScreen}
-        options={{ title: 'Submit Innovation' }}
       />
     </Stack.Navigator>
   );
@@ -158,22 +179,25 @@ function InnovationStack() {
 
 // Startup Stack
 function StartupStack() {
+  const { theme } = useTheme();
+  
   return (
-    <Stack.Navigator>
+    <Stack.Navigator
+      screenOptions={{
+        headerShown: false,
+      }}
+    >
       <Stack.Screen 
         name="StartupList" 
         component={StartupListScreen}
-        options={{ title: 'Start-ups' }}
       />
       <Stack.Screen 
         name="StartupDetail" 
         component={StartupDetailScreen}
-        options={{ title: 'Start-up Details' }}
       />
       <Stack.Screen 
         name="RegisterStartup" 
         component={RegisterStartupScreen}
-        options={{ title: 'Register Start-up' }}
       />
     </Stack.Navigator>
   );
@@ -241,6 +265,8 @@ function MainTabs() {
     return screens;
   };
 
+  const { theme, isDarkMode } = useTheme();
+
   return (
     <Tab.Navigator
       screenOptions={({ route }) => ({
@@ -248,8 +274,12 @@ function MainTabs() {
           const screen = getTabScreens().find(s => s.name === route.name);
           return <Ionicons name={screen?.icon} size={size} color={color} />;
         },
-        tabBarActiveTintColor: '#667eea',
-        tabBarInactiveTintColor: 'gray',
+        tabBarActiveTintColor: theme.colors.primary,
+        tabBarInactiveTintColor: theme.colors.textSecondary,
+        tabBarStyle: isDesktop ? { display: 'none' } : {
+          backgroundColor: theme.colors.surface,
+          borderTopColor: theme.colors.border,
+        },
         headerShown: false,
       })}
     >
@@ -267,25 +297,69 @@ function MainTabs() {
   );
 }
 
+// Desktop Layout Wrapper
+function DesktopLayoutWrapper({ children, navigation, route }) {
+  if (!isDesktop) {
+    return children;
+  }
+
+  return (
+    <View style={{ flex: 1, flexDirection: 'row' }}>
+      <Sidebar navigation={navigation} currentRoute={route?.name} />
+      <View style={{ flex: 1 }}>
+        {children}
+      </View>
+    </View>
+  );
+}
+
 // Main Drawer Navigator
 function MainDrawer() {
   const { hasPermission } = useAuth();
+  const { theme, isDarkMode } = useTheme();
 
+  // For desktop, use Stack Navigator with Sidebar
+  if (isDesktop) {
+    return (
+      <Stack.Navigator
+        screenOptions={{
+          headerShown: false,
+        }}
+      >
+        <Stack.Screen name="MainTabs">
+          {(props) => (
+            <DesktopLayoutWrapper {...props}>
+              <MainTabs {...props} />
+            </DesktopLayoutWrapper>
+          )}
+        </Stack.Screen>
+        <Stack.Screen name="Profile">
+          {(props) => (
+            <DesktopLayoutWrapper {...props}>
+              <ProfileScreen {...props} />
+            </DesktopLayoutWrapper>
+          )}
+        </Stack.Screen>
+      </Stack.Navigator>
+    );
+  }
+
+  // For mobile, use Drawer Navigator
   return (
     <Drawer.Navigator
       screenOptions={{
-        drawerActiveTintColor: '#667eea',
-        headerStyle: {
-          backgroundColor: '#667eea',
+        headerShown: false,
+        drawerActiveTintColor: theme.colors.primary,
+        drawerInactiveTintColor: theme.colors.textSecondary,
+        drawerStyle: {
+          backgroundColor: theme.colors.surface,
         },
-        headerTintColor: '#fff',
       }}
     >
       <Drawer.Screen 
         name="MainTabs" 
         component={MainTabs}
         options={{ 
-          title: 'Gujarat Innovation Hub',
           drawerLabel: 'Dashboard',
           drawerIcon: ({ color }) => <Ionicons name="home-outline" size={22} color={color} />
         }}
@@ -295,7 +369,6 @@ function MainDrawer() {
         name="Profile" 
         component={ProfileScreen}
         options={{ 
-          title: 'Profile',
           drawerIcon: ({ color }) => <Ionicons name="person-outline" size={22} color={color} />
         }}
       />
@@ -306,16 +379,33 @@ function MainDrawer() {
 // Root Navigator
 function RootNavigator() {
   const { currentUser, loading } = useAuth();
+  const { theme, isDarkMode, isLoading: themeLoading } = useTheme();
   
   console.log('RootNavigator - Current user:', currentUser ? 'exists' : 'null');
   console.log('RootNavigator - Loading:', loading);
+  console.log('RootNavigator - Theme:', theme ? 'loaded' : 'null');
 
-  if (loading) {
+  if (loading || themeLoading || !theme) {
     return null; // You can add a loading screen here
   }
 
+  // Custom navigation theme based on dark mode
+  const navigationTheme = {
+    dark: isDarkMode,
+    colors: {
+      primary: theme.colors.primary,
+      background: theme.colors.background,
+      card: theme.colors.card,
+      text: theme.colors.text,
+      border: theme.colors.border,
+      notification: theme.colors.primary,
+    },
+    spacing: theme.spacing,
+    fonts: theme.fonts,
+  };
+
   return (
-    <NavigationContainer>
+    <NavigationContainer theme={navigationTheme}>
       {currentUser ? (
         console.log('Rendering MainDrawer'),
         <MainDrawer />
@@ -327,10 +417,15 @@ function RootNavigator() {
   );
 }
 
-export default function AppNavigator() {
+// Wrapper to ensure both Auth and Theme contexts are available
+function NavigatorContent() {
   return (
     <AuthProvider>
       <RootNavigator />
     </AuthProvider>
   );
+}
+
+export default function AppNavigator() {
+  return <NavigatorContent />;
 }

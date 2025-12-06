@@ -6,15 +6,20 @@ import {
   ScrollView,
   RefreshControl,
   TouchableOpacity,
-  Alert
+  Alert,
+  Dimensions
 } from 'react-native';
-import { Searchbar, FAB, Chip } from 'react-native-paper';
+import { Searchbar, FAB, Chip, Title } from 'react-native-paper';
+import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { collection, query, where, orderBy, getDocs, limit, startAfter } from 'firebase/firestore';
 import { db } from '../../config/firebaseConfig';
 import { useAuth, USER_ROLES } from '../../context/AuthContext';
 import { StatCard, EmptyState, LoadingCard, StatusBadge } from '../../components/UIComponents';
+import { useTheme } from '../../context/ThemeContext';
 import moment from 'moment';
+
+const { width } = Dimensions.get('window');
 
 const IPR_TYPES = [
   'All',
@@ -50,6 +55,7 @@ const IPR_CATEGORIES = [
 
 export default function IPRListScreen({ navigation }) {
   const { userProfile, hasPermission, isRole } = useAuth();
+  const { isDarkMode } = useTheme();
   const [iprApplications, setIprApplications] = useState([]);
   const [filteredApplications, setFilteredApplications] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -58,6 +64,12 @@ export default function IPRListScreen({ navigation }) {
   const [selectedType, setSelectedType] = useState('All');
   const [selectedStatus, setSelectedStatus] = useState('All');
   const [selectedCategory, setSelectedCategory] = useState('All');
+  const [stats, setStats] = useState({
+    totalApplications: 0,
+    granted: 0,
+    pending: 0,
+    patents: 0
+  });
   const [lastDoc, setLastDoc] = useState(null);
   const [hasMore, setHasMore] = useState(true);
 
@@ -118,6 +130,7 @@ export default function IPRListScreen({ navigation }) {
         setIprApplications(prev => [...prev, ...applicationsData]);
       } else {
         setIprApplications(applicationsData);
+        calculateStats(applicationsData);
       }
 
       setLastDoc(snapshot.docs[snapshot.docs.length - 1]);
@@ -130,6 +143,24 @@ export default function IPRListScreen({ navigation }) {
       setLoading(false);
       setRefreshing(false);
     }
+  };
+
+  const calculateStats = (applicationsData) => {
+    const stats = applicationsData.reduce((acc, app) => {
+      acc.totalApplications++;
+      if (app.status === 'granted') {
+        acc.granted++;
+      }
+      if (['filed', 'published', 'examined'].includes(app.status)) {
+        acc.pending++;
+      }
+      if (app.type === 'Patent') {
+        acc.patents++;
+      }
+      return acc;
+    }, { totalApplications: 0, granted: 0, pending: 0, patents: 0 });
+    
+    setStats(stats);
   };
 
   const filterApplications = () => {
@@ -193,56 +224,75 @@ export default function IPRListScreen({ navigation }) {
       style={styles.iprCard}
       onPress={() => navigation.navigate('IPRDetail', { iprId: item.id })}
     >
-      <View style={styles.cardHeader}>
-        <View style={styles.cardTitleContainer}>
-          <Text style={styles.cardTitle} numberOfLines={2}>{item.title}</Text>
-          <Chip mode="outlined" compact style={styles.typeChip}>
-            {item.type}
-          </Chip>
-        </View>
-        <StatusBadge status={item.status} type="ipr" />
-      </View>
-      
-      <Text style={styles.cardDescription} numberOfLines={2}>
-        {item.description}
-      </Text>
-      
-      <View style={styles.cardMeta}>
-        <View style={styles.metaItem}>
-          <Ionicons name="person-outline" size={14} color="#666" />
-          <Text style={styles.metaText}>{item.applicantName}</Text>
-        </View>
-        <View style={styles.metaItem}>
-          <Ionicons name="business-outline" size={14} color="#666" />
-          <Text style={styles.metaText}>{item.organization}</Text>
-        </View>
-      </View>
-
-      {item.applicationNumber && (
-        <View style={styles.applicationNumber}>
-          <Ionicons name="document-text-outline" size={14} color="#667eea" />
-          <Text style={styles.applicationNumberText}>{item.applicationNumber}</Text>
-        </View>
-      )}
-      
-      <View style={styles.cardFooter}>
-        <View style={styles.cardDates}>
-          <Text style={styles.dateText}>
-            Filed: {moment(item.filingDate || item.createdAt).format('DD/MM/YYYY')}
-          </Text>
-          {item.grantDate && (
-            <Text style={styles.grantDateText}>
-              Granted: {moment(item.grantDate).format('DD/MM/YYYY')}
-            </Text>
-          )}
+      <LinearGradient
+        colors={['rgba(255, 255, 255, 0.05)', 'rgba(255, 255, 255, 0.02)']}
+        style={styles.cardGradient}
+      >
+        <View style={styles.cardHeader}>
+          <View style={styles.titleSection}>
+            <View style={styles.titleRow}>
+              <Text style={styles.cardTitle} numberOfLines={2}>{item.title}</Text>
+              {item.isVerified && (
+                <Ionicons name="checkmark-circle" size={20} color="#4CAF50" style={styles.verifiedIcon} />
+              )}
+            </View>
+            <View style={styles.badges}>
+              <StatusBadge status={item.type} color="#b366ff" />
+              <StatusBadge status={item.status} color={getStatusColor(item.status)} />
+            </View>
+          </View>
         </View>
         
-        <View style={styles.cardActions}>
-          <Chip mode="outlined" compact style={styles.categoryChip}>
-            {item.category}
-          </Chip>
+        <Text style={styles.cardDescription} numberOfLines={3}>
+          {item.description}
+        </Text>
+        
+        <View style={styles.cardDetails}>
+          <View style={styles.detailRow}>
+            <Ionicons name="person-outline" size={16} color="#b366ff" />
+            <Text style={styles.applicantName}>{item.applicantName}</Text>
+          </View>
+          <View style={styles.detailRow}>
+            <Ionicons name="business-outline" size={16} color="#b366ff" />
+            <Text style={styles.organization}>{item.organization || 'N/A'}</Text>
+          </View>
+          {item.applicationNumber && (
+            <View style={styles.detailRow}>
+              <Ionicons name="document-text-outline" size={16} color="#b366ff" />
+              <Text style={styles.applicationNumber}>{item.applicationNumber}</Text>
+            </View>
+          )}
         </View>
-      </View>
+
+        <View style={styles.metricsGrid}>
+          <View style={styles.metricBox}>
+            <Ionicons name="calendar-outline" size={18} color="#b366ff" />
+            <Text style={styles.metricValue}>
+              {moment(item.filingDate || item.createdAt).format('DD/MM/YY')}
+            </Text>
+            <Text style={styles.metricLabel}>Filed</Text>
+          </View>
+          <View style={styles.metricBox}>
+            <Ionicons name="folder-outline" size={18} color="#b366ff" />
+            <Text style={styles.metricValue}>{item.category}</Text>
+            <Text style={styles.metricLabel}>Category</Text>
+          </View>
+          {item.grantDate && (
+            <View style={styles.metricBox}>
+              <Ionicons name="trophy-outline" size={18} color="#4CAF50" />
+              <Text style={[styles.metricValue, { color: '#4CAF50' }]}>
+                {moment(item.grantDate).format('DD/MM/YY')}
+              </Text>
+              <Text style={styles.metricLabel}>Granted</Text>
+            </View>
+          )}
+        </View>
+
+        <TouchableOpacity style={styles.viewDetailsButton}>
+          <Text style={styles.viewDetailsText}>View Details</Text>
+          <Ionicons name="arrow-forward" size={16} color="#fff" />
+        </TouchableOpacity>
+      </LinearGradient>
     </TouchableOpacity>
   );
 
@@ -253,14 +303,17 @@ export default function IPRListScreen({ navigation }) {
         showsHorizontalScrollIndicator={false}
         contentContainerStyle={styles.filterScroll}
       >
-        <Text style={styles.filterLabel}>Type:</Text>
         {IPR_TYPES.map((type) => (
           <Chip
             key={type}
             mode={selectedType === type ? 'flat' : 'outlined'}
             selected={selectedType === type}
+            selectedColor={selectedType === type ? '#fff' : '#b366ff'}
             onPress={() => setSelectedType(type)}
-            style={styles.filterChip}
+            style={[
+              styles.filterChip,
+              selectedType === type && styles.filterChipSelected
+            ]}
             textStyle={styles.filterChipText}
           >
             {type}
@@ -273,14 +326,17 @@ export default function IPRListScreen({ navigation }) {
         showsHorizontalScrollIndicator={false}
         contentContainerStyle={styles.filterScroll}
       >
-        <Text style={styles.filterLabel}>Status:</Text>
         {IPR_STATUS.map((status) => (
           <Chip
             key={status}
             mode={selectedStatus === status ? 'flat' : 'outlined'}
             selected={selectedStatus === status}
+            selectedColor={selectedStatus === status ? '#fff' : '#b366ff'}
             onPress={() => setSelectedStatus(status)}
-            style={styles.filterChip}
+            style={[
+              styles.filterChip,
+              selectedStatus === status && styles.filterChipSelected
+            ]}
             textStyle={styles.filterChipText}
           >
             {status.charAt(0).toUpperCase() + status.slice(1)}
@@ -293,14 +349,17 @@ export default function IPRListScreen({ navigation }) {
         showsHorizontalScrollIndicator={false}
         contentContainerStyle={styles.filterScroll}
       >
-        <Text style={styles.filterLabel}>Category:</Text>
         {IPR_CATEGORIES.map((category) => (
           <Chip
             key={category}
             mode={selectedCategory === category ? 'flat' : 'outlined'}
             selected={selectedCategory === category}
+            selectedColor={selectedCategory === category ? '#fff' : '#b366ff'}
             onPress={() => setSelectedCategory(category)}
-            style={styles.filterChip}
+            style={[
+              styles.filterChip,
+              selectedCategory === category && styles.filterChipSelected
+            ]}
             textStyle={styles.filterChipText}
           >
             {category}
@@ -313,100 +372,137 @@ export default function IPRListScreen({ navigation }) {
   if (loading && iprApplications.length === 0) {
     return (
       <View style={styles.container}>
-        <Searchbar
-          placeholder="Search IPR applications..."
-          onChangeText={setSearchQuery}
-          value={searchQuery}
-          style={styles.searchbar}
-        />
-        {renderFilters()}
-        <ScrollView style={styles.loadingContainer}>
-          {[...Array(5)].map((_, index) => (
-            <LoadingCard key={index} />
-          ))}
-        </ScrollView>
+        <LinearGradient
+          colors={['#1a1a2e', '#16213e', '#0f1419']}
+          style={styles.gradient}
+        >
+          <View style={styles.header}>
+            <Title style={styles.headerTitle}>IPR Applications</Title>
+          </View>
+          <Searchbar
+            placeholder="Search IPR applications..."
+            onChangeText={setSearchQuery}
+            value={searchQuery}
+            style={styles.searchbar}
+            iconColor="#b366ff"
+            placeholderTextColor="#999"
+          />
+          {renderFilters()}
+          <ScrollView style={styles.loadingContainer}>
+            {[...Array(5)].map((_, index) => (
+              <LoadingCard key={index} />
+            ))}
+          </ScrollView>
+        </LinearGradient>
       </View>
     );
   }
 
   return (
     <View style={styles.container}>
-      <Searchbar
-        placeholder="Search IPR applications..."
-        onChangeText={setSearchQuery}
-        value={searchQuery}
-        style={styles.searchbar}
-      />
-      
-      {renderFilters()}
-      
-      <ScrollView
-        style={styles.content}
-        refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
-        }
-        onMomentumScrollEnd={({ nativeEvent }) => {
-          const { layoutMeasurement, contentOffset, contentSize } = nativeEvent;
-          const isCloseToBottom = layoutMeasurement.height + contentOffset.y >= contentSize.height - 20;
-          if (isCloseToBottom) {
-            loadMore();
-          }
-        }}
+      <LinearGradient
+        colors={['#1a1a2e', '#16213e', '#0f1419']}
+        style={styles.gradient}
       >
-        {/* Summary Stats */}
-        <View style={styles.statsContainer}>
-          <StatCard
-            title="Total Applications"
-            value={iprApplications.length.toString()}
-            icon="shield-checkmark-outline"
-            color="#FF9800"
-          />
-          <StatCard
-            title="Granted"
-            value={iprApplications.filter(app => app.status === 'granted').length.toString()}
-            icon="checkmark-circle-outline"
-            color="#4CAF50"
-          />
-          <StatCard
-            title="Pending"
-            value={iprApplications.filter(app => ['filed', 'published', 'examined'].includes(app.status)).length.toString()}
-            icon="time-outline"
-            color="#2196F3"
-          />
+        <View style={styles.header}>
+          <Title style={styles.headerTitle}>IPR Applications</Title>
+          <Text style={styles.resultsCount}>
+            {filteredApplications.length} {filteredApplications.length === 1 ? 'result' : 'results'}
+          </Text>
         </View>
 
-        {filteredApplications.length === 0 ? (
-          <EmptyState
-            icon="shield-checkmark-outline"
-            title="No IPR Applications Found"
-            description={searchQuery ? 
-              "No applications match your search criteria. Try adjusting your filters." :
-              "No IPR applications available. Be the first to submit an application!"
-            }
-            actionText={hasPermission('submit_ipr') ? "Submit Application" : null}
-            onAction={() => navigation.navigate('AddIPR')}
-          />
-        ) : (
-          <>
-            {filteredApplications.map(renderIPRCard)}
-            
-            {loading && hasMore && (
-              <View style={styles.loadMoreContainer}>
-                <LoadingCard />
-              </View>
-            )}
-          </>
-        )}
-      </ScrollView>
-
-      {(userProfile?.role === USER_ROLES.ENTREPRENEUR || userProfile?.role === USER_ROLES.RESEARCHER || hasPermission('submit_ipr')) && (
-        <FAB
-          style={styles.fab}
-          icon="plus"
-          onPress={() => navigation.navigate('AddIPR')}
-          label="Submit IPR"
+        <Searchbar
+          placeholder="Search IPR applications..."
+          onChangeText={setSearchQuery}
+          value={searchQuery}
+          style={styles.searchbar}
+          iconColor="#b366ff"
+          placeholderTextColor="#999"
         />
-      )}
+        
+        {renderFilters()}
+        
+        <ScrollView
+          style={styles.content}
+          refreshControl={
+            <RefreshControl 
+              refreshing={refreshing} 
+              onRefresh={onRefresh}
+              tintColor="#b366ff"
+              colors={['#b366ff']}
+            />
+          }
+          onMomentumScrollEnd={({ nativeEvent }) => {
+            const { layoutMeasurement, contentOffset, contentSize } = nativeEvent;
+            const isCloseToBottom = layoutMeasurement.height + contentOffset.y >= contentSize.height - 20;
+            if (isCloseToBottom) {
+              loadMore();
+            }
+          }}
+        >
+          {/* Summary Stats */}
+          <View style={styles.statsContainer}>
+            <StatCard
+              title="Total"
+              value={stats.totalApplications.toString()}
+              icon="shield-checkmark-outline"
+            />
+            <StatCard
+              title="Granted"
+              value={stats.granted.toString()}
+              icon="checkmark-circle-outline"
+            />
+            <StatCard
+              title="Pending"
+              value={stats.pending.toString()}
+              icon="time-outline"
+            />
+            <StatCard
+              title="Patents"
+              value={stats.patents.toString()}
+              icon="document-text-outline"
+            />
+          </View>
+
+          {filteredApplications.length === 0 ? (
+            <View style={styles.emptyState}>
+              <Ionicons name="shield-checkmark-outline" size={80} color="#666" />
+              <Text style={styles.emptyText}>No IPR Applications Found</Text>
+              <Text style={styles.emptySubtext}>
+                {searchQuery ? 
+                  "No applications match your search criteria. Try adjusting your filters." :
+                  "No IPR applications available. Be the first to submit an application!"
+                }
+              </Text>
+            </View>
+          ) : (
+            <>
+              {filteredApplications.map(renderIPRCard)}
+              
+              {loading && hasMore && (
+                <View style={styles.loadMoreContainer}>
+                  <LoadingCard />
+                </View>
+              )}
+              
+              {hasMore && !loading && (
+                <TouchableOpacity style={styles.loadMoreButton} onPress={loadMore}>
+                  <Text style={styles.loadMoreText}>Load More</Text>
+                </TouchableOpacity>
+              )}
+            </>
+          )}
+        </ScrollView>
+
+        {(userProfile?.role === USER_ROLES.ENTREPRENEUR || userProfile?.role === USER_ROLES.RESEARCHER || hasPermission('submit_ipr')) && (
+          <FAB
+            style={styles.fab}
+            icon="plus"
+            color="#fff"
+            onPress={() => navigation.navigate('AddIPR')}
+          />
+        )}
+      </LinearGradient>
     </View>
   );
 }
@@ -414,144 +510,227 @@ export default function IPRListScreen({ navigation }) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f5f5f5',
+    backgroundColor: '#0f1419',
+  },
+  gradient: {
+    flex: 1,
+  },
+  header: {
+    paddingHorizontal: 20,
+    paddingTop: 20,
+    paddingBottom: 10,
+  },
+  headerTitle: {
+    fontSize: 28,
+    fontWeight: 'bold',
+    color: '#fff',
+    marginBottom: 4,
+  },
+  resultsCount: {
+    fontSize: 14,
+    color: '#ddd',
   },
   searchbar: {
-    margin: 16,
-    elevation: 2,
+    marginHorizontal: 20,
+    marginBottom: 16,
+    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    borderRadius: 12,
+    elevation: 0,
   },
   filtersContainer: {
-    backgroundColor: '#fff',
-    paddingVertical: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: '#e0e0e0',
+    marginBottom: 16,
   },
   filterScroll: {
-    paddingHorizontal: 16,
-    paddingVertical: 4,
-    alignItems: 'center',
-  },
-  filterLabel: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#333',
-    marginRight: 12,
+    paddingHorizontal: 20,
+    paddingVertical: 8,
   },
   filterChip: {
     marginRight: 8,
-    height: 32,
+    height: 36,
+    backgroundColor: 'rgba(179, 102, 255, 0.15)',
+    borderColor: 'rgba(179, 102, 255, 0.3)',
+  },
+  filterChipSelected: {
+    backgroundColor: '#b366ff',
   },
   filterChipText: {
     fontSize: 12,
+    color: '#fff',
   },
   content: {
     flex: 1,
-    padding: 16,
   },
   statsContainer: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
+    flexWrap: 'wrap',
+    paddingHorizontal: 20,
     marginBottom: 20,
+    gap: 12,
   },
   loadingContainer: {
-    padding: 16,
+    padding: 20,
   },
   iprCard: {
-    backgroundColor: '#fff',
-    borderRadius: 12,
-    padding: 16,
+    borderRadius: 16,
     marginBottom: 16,
-    elevation: 2,
+    marginHorizontal: 20,
+    overflow: 'hidden',
+    elevation: 4,
+    shadowColor: '#b366ff',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 4,
+    borderWidth: 1,
+    borderColor: 'rgba(179, 102, 255, 0.2)',
+  },
+  cardGradient: {
+    padding: 16,
   },
   cardHeader: {
     marginBottom: 12,
   },
-  cardTitleContainer: {
+  titleSection: {
+    flex: 1,
+  },
+  titleRow: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'flex-start',
+    alignItems: 'center',
     marginBottom: 8,
   },
   cardTitle: {
-    flex: 1,
     fontSize: 16,
     fontWeight: 'bold',
-    color: '#333',
-    marginRight: 12,
+    flex: 1,
+    color: '#fff',
   },
-  typeChip: {
-    height: 24,
+  verifiedIcon: {
+    marginLeft: 6,
+  },
+  badges: {
+    flexDirection: 'row',
+    gap: 8,
+    flexWrap: 'wrap',
   },
   cardDescription: {
-    fontSize: 14,
-    color: '#666',
+    fontSize: 13,
     lineHeight: 20,
-    marginBottom: 12,
+    marginBottom: 16,
+    color: '#ccc',
   },
-  cardMeta: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginBottom: 8,
+  cardDetails: {
+    marginBottom: 16,
+    gap: 8,
   },
-  metaItem: {
+  detailRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    flex: 1,
+    gap: 8,
   },
-  metaText: {
+  applicantName: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: '#fff',
+  },
+  organization: {
     fontSize: 12,
-    color: '#666',
-    marginLeft: 4,
+    color: '#ddd',
   },
   applicationNumber: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 12,
-  },
-  applicationNumberText: {
     fontSize: 12,
-    color: '#667eea',
+    color: '#b366ff',
     fontWeight: '600',
-    marginLeft: 4,
   },
-  cardFooter: {
+  metricsGrid: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+    flexWrap: 'wrap',
+    gap: 8,
+    marginBottom: 16,
   },
-  cardDates: {
+  metricBox: {
     flex: 1,
-  },
-  dateText: {
-    fontSize: 12,
-    color: '#999',
-  },
-  grantDateText: {
-    fontSize: 12,
-    color: '#4CAF50',
-    fontWeight: '600',
-    marginTop: 2,
-  },
-  cardActions: {
-    flexDirection: 'row',
-    justifyContent: 'flex-end',
+    minWidth: '30%',
+    padding: 10,
+    borderRadius: 12,
     alignItems: 'center',
-    marginTop: 8,
+    backgroundColor: 'rgba(179, 102, 255, 0.15)',
   },
-  actionButton: {
-    marginLeft: 8,
+  metricValue: {
+    fontSize: 14,
+    fontWeight: 'bold',
+    marginTop: 6,
+    marginBottom: 2,
+    color: '#fff',
   },
-  categoryChip: {
-    height: 24,
+  metricLabel: {
+    fontSize: 9,
+    textAlign: 'center',
+    color: '#ddd',
+  },
+  viewDetailsButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#b366ff',
+    paddingVertical: 10,
+    paddingHorizontal: 20,
+    borderRadius: 12,
+    gap: 8,
+  },
+  viewDetailsText: {
+    fontSize: 13,
+    color: '#fff',
+    fontWeight: '700',
+  },
+  emptyState: {
+    alignItems: 'center',
+    paddingVertical: 60,
+  },
+  emptyText: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: '#666',
+    marginTop: 20,
+    marginBottom: 8,
+  },
+  emptySubtext: {
+    fontSize: 14,
+    color: '#999',
+    textAlign: 'center',
+    paddingHorizontal: 40,
+    lineHeight: 20,
   },
   loadMoreContainer: {
-    marginTop: 20,
+    padding: 20,
+  },
+  loadMoreButton: {
+    backgroundColor: '#b366ff',
+    padding: 16,
+    borderRadius: 12,
+    alignItems: 'center',
+    marginHorizontal: 20,
+    marginTop: 16,
+    marginBottom: 20,
+    elevation: 2,
+    shadowColor: '#b366ff',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 4,
+  },
+  loadMoreText: {
+    color: '#fff',
+    fontWeight: '700',
+    fontSize: 14,
   },
   fab: {
     position: 'absolute',
     margin: 16,
     right: 0,
     bottom: 0,
-    backgroundColor: '#FF9800',
+    backgroundColor: '#b366ff',
+    elevation: 8,
+    shadowColor: '#b366ff',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
   },
 });
