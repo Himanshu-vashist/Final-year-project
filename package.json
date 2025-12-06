@@ -3,10 +3,10 @@
   "version": "1.0.0",
   "main": "index.js",
   "scripts": {
-    "start": "set NODE_OPTIONS=--openssl-legacy-provider && expo start --clear",
-    "android": "set NODE_OPTIONS=--openssl-legacy-provider && expo start --android --clear",
-    "ios": "set NODE_OPTIONS=--openssl-legacy-provider && expo start --ios --clear",
-    "web": "set NODE_OPTIONS=--openssl-legacy-provider && expo start --web --clear"
+    "start": "expo start",
+    "android": "expo start --android",
+    "ios": "expo start --ios",
+    "web": "expo start --web"
   },
   "dependencies": {
     "@expo/vector-icons": "^15.0.2",
