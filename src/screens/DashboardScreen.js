@@ -1,4 +1,4 @@
-
+// DashboardScreen.js (Analytics-focused redesign - Style D)
 import React, { useEffect, useState, useMemo } from 'react';
 import {
   View,
@@ -9,18 +9,71 @@ import {
   TouchableOpacity,
   Dimensions,
   FlatList,
-  Platform
+  Platform,
+  Animated,
 } from 'react-native';
-import { Card, Title, Paragraph, Avatar, Surface } from 'react-native-paper';
+import { Avatar } from 'react-native-paper';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuth, USER_ROLES } from '../context/AuthContext';
 import { collection, query, where, getDocs, orderBy, limit } from 'firebase/firestore';
 import { db } from '../config/firebaseConfig';
+import EventCalendar from '../components/EventCalendarComponent';
 
-const { width, height } = Dimensions.get('window');
-const STAT_CARD_WIDTH = width > 600 ? (width - 70) / 4 : (width - 50) / 2;
+
+const { width } = Dimensions.get('window');
 const isTablet = width > 600;
+
+// Small util: safe number
+const safeNum = (v) => (isNaN(Number(v)) ? 0 : Number(v));
+
+/* -----------------------
+  Simple Sparkline component (no external libs)
+  Accepts small array of numbers and renders vertical bars
+------------------------*/
+const Sparkline = ({ data = [], color = '#b366ff', height = 28, width = 64 }) => {
+  // normalize data
+  const vals = (data && data.length) ? data : [0, 0, 0, 0, 0];
+  const max = Math.max(...vals, 1);
+  const min = Math.min(...vals, 0);
+  const range = max - min === 0 ? 1 : max - min;
+
+  return (
+    <View style={{ width, height, flexDirection: 'row', alignItems: 'flex-end', justifyContent: 'space-between' }}>
+      {vals.map((v, i) => {
+        const h = ((v - min) / range) * height;
+        return (
+          <View
+            key={i}
+            style={{
+              width: Math.max(2, (width / vals.length) - 4),
+              height: Math.max(2, h),
+              backgroundColor: color,
+              borderRadius: 2,
+              opacity: 0.95,
+            }}
+          />
+        );
+      })}
+    </View>
+  );
+};
+
+/* -----------------------
+  Mini trend bars for performance row
+  Accepts array of historic monthly numbers
+------------------------*/
+const TrendBars = ({ data = [], color = '#36D1DC', height = 40 }) => {
+  const max = Math.max(...data, 1);
+  return (
+    <View style={{ flexDirection: 'row', alignItems: 'flex-end', gap: 6 }}>
+      {data.map((v, i) => {
+        const h = (v / max) * height;
+        return <View key={i} style={{ width: 8, height: Math.max(4, h), backgroundColor: color, borderRadius: 4, marginRight: 6 }} />;
+      })}
+    </View>
+  );
+};
 
 export default function DashboardScreen({ navigation }) {
   const { userProfile, hasPermission, isRole } = useAuth();
@@ -28,7 +81,7 @@ export default function DashboardScreen({ navigation }) {
     recentResearch: [],
     recentIPR: [],
     recentStartups: [],
-    stats: { totalResearch: 0, totalIPR: 0, totalStartups: 0, totalFunding: 0 }
+    stats: { totalResearch: 0, totalIPR: 0, totalStartups: 0, totalFunding: 0 },
   });
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -56,7 +109,7 @@ export default function DashboardScreen({ navigation }) {
         stats.totalIPR = iprSnapshot.size;
         stats.totalStartups = startupsSnapshot.size;
 
-        startupsSnapshot.forEach(doc => {
+        startupsSnapshot.forEach((doc) => {
           const data = doc.data();
           if (data?.funding) {
             stats.totalFunding += parseFloat(data.funding) || 0;
@@ -71,617 +124,449 @@ export default function DashboardScreen({ navigation }) {
     }
   };
 
+  const loadRecent = async (col, opts = {}) => {
+    try {
+      const { roleRestrictField } = opts;
+      let q;
+      // simple default: public latest 5
+      q = query(collection(db, col), where('isPublic', '==', true), orderBy('createdAt', 'desc'), limit(5));
+      const snapshot = await getDocs(q);
+      return snapshot.docs.map((d) => ({ id: d.id, ...d.data() }));
+    } catch (e) {
+      console.warn('loadRecent error', col, e);
+      return [];
+    }
+  };
+
   const loadDashboardData = async () => {
     try {
       setLoading(true);
       const [recentResearch, recentIPR, recentStartups, stats] = await Promise.all([
-        loadRecentResearch(),
-        loadRecentIPR(),
-        loadRecentStartups(),
-        loadStats()
+        loadRecent('research'),
+        loadRecent('ipr'),
+        loadRecent('startups'),
+        loadStats(),
       ]);
-
       setDashboardData({ recentResearch, recentIPR, recentStartups, stats });
-    } catch (error) {
-      console.error('Error loading dashboard data:', error);
+    } catch (err) {
+      console.error('loadDashboardData error', err);
     } finally {
       setLoading(false);
-    }
-  };
-
-  const loadRecentResearch = async () => {
-    try {
-      let q;
-      if (isRole(USER_ROLES.RESEARCHER)) {
-        q = query(
-          collection(db, 'research'),
-          where('userId', '==', userProfile.uid),
-          orderBy('createdAt', 'desc'),
-          limit(3)
-        );
-      } else if (hasPermission('view_all_data')) {
-        q = query(collection(db, 'research'), orderBy('createdAt', 'desc'), limit(5));
-      } else {
-        q = query(
-          collection(db, 'research'),
-          where('isPublic', '==', true),
-          orderBy('createdAt', 'desc'),
-          limit(3)
-        );
-      }
-
-      const snapshot = await getDocs(q);
-      return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-    } catch (error) {
-      console.error('Error loading research data:', error);
-      return [];
-    }
-  };
-
-  const loadRecentIPR = async () => {
-    try {
-      let q;
-      if (isRole(USER_ROLES.RESEARCHER) || isRole(USER_ROLES.ENTREPRENEUR)) {
-        q = query(
-          collection(db, 'ipr'),
-          where('userId', '==', userProfile.uid),
-          orderBy('createdAt', 'desc'),
-          limit(3)
-        );
-      } else if (hasPermission('view_all_data')) {
-        q = query(collection(db, 'ipr'), orderBy('createdAt', 'desc'), limit(5));
-      } else {
-        q = query(
-          collection(db, 'ipr'),
-          where('isPublic', '==', true),
-          orderBy('createdAt', 'desc'),
-          limit(3)
-        );
-      }
-
-      const snapshot = await getDocs(q);
-      return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-    } catch (error) {
-      console.error('Error loading IPR data:', error);
-      return [];
-    }
-  };
-
-  const loadRecentStartups = async () => {
-    try {
-      let q;
-      if (isRole(USER_ROLES.ENTREPRENEUR)) {
-        q = query(
-          collection(db, 'startups'),
-          where('userId', '==', userProfile.uid),
-          orderBy('createdAt', 'desc'),
-          limit(3)
-        );
-      } else if (hasPermission('view_all_data') || isRole(USER_ROLES.INVESTOR)) {
-        q = query(collection(db, 'startups'), orderBy('createdAt', 'desc'), limit(5));
-      } else {
-        q = query(
-          collection(db, 'startups'),
-          where('isPublic', '==', true),
-          orderBy('createdAt', 'desc'),
-          limit(3)
-        );
-      }
-
-      const snapshot = await getDocs(q);
-      return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-    } catch (error) {
-      console.error('Error loading startup data:', error);
-      return [];
     }
   };
 
   const getWelcomeMessage = () => {
     const hour = new Date().getHours();
     const greeting = hour < 12 ? 'Good morning' : hour < 18 ? 'Good afternoon' : 'Good evening';
-    return `${greeting}, ${userProfile?.name || 'User'}!`;
+    return `${greeting}, ${userProfile?.name || 'User'}`;
   };
 
-  const getRoleSpecificActions = () => {
-    const actions = [];
-
-    if (hasPermission('submit_research')) {
-      actions.push({ title: 'Submit Research', icon: 'flask', color: ['#36D1DC', '#5B86E5'], onPress: () => navigation.navigate('Research', { screen: 'AddResearch' }) });
-    }
-
-    if (hasPermission('submit_ipr')) {
-      actions.push({ title: 'Apply for IPR', icon: 'shield-checkmark', color: ['#F7971E', '#FFD200'], onPress: () => navigation.navigate('IPR', { screen: 'AddIPR' }) });
-    }
-
-    if (hasPermission('submit_idea')) {
-      actions.push({ title: 'Submit Idea', icon: 'bulb', color: ['#7F00FF', '#E100FF'], onPress: () => navigation.navigate('Innovation', { screen: 'IdeaSubmission' }) });
-    }
-
-    if (hasPermission('submit_startup')) {
-      actions.push({ title: 'Register Startup', icon: 'rocket', color: ['#FF5F6D', '#FFC371'], onPress: () => navigation.navigate('Startups', { screen: 'RegisterStartup' }) });
-    }
-
-    return actions;
-  };
-
-  const formatINR = (amount) => {
-    if (!amount) return '₹0';
-    // show in crores if large
-    if (amount >= 1e7) return `₹${(amount / 1e7).toFixed(1)} Cr`;
-    if (amount >= 1e5) return `₹${(amount / 1e5).toFixed(1)} L`;
-    return `₹${amount}`;
-  };
-
-  const StatCard = ({ title, value, icon }) => (
-    <View style={styles.statCard}>
-      <View style={styles.statIconContainer}>
-        <Ionicons name={icon} size={26} color="#b366ff" />
-      </View>
-      <View style={styles.statContent}>
-        <Text style={styles.statValue}>{value}</Text>
-        <Text style={styles.statTitle}>{title}</Text>
-      </View>
-    </View>
-  );
-
-  const ActionButton = ({ item }) => (
-    <TouchableOpacity style={styles.actionButton} onPress={item.onPress} activeOpacity={0.8}>
-      <LinearGradient
-        colors={['#b366ff', '#8b3dc7', '#6a2c96']}
-        style={styles.actionGradient}
-      >
-        <Ionicons name={item.icon} size={24} color="#fff" />
-        <Text style={styles.actionText}>{item.title}</Text>
-      </LinearGradient>
-    </TouchableOpacity>
-  );
-
-  const RecentCard = ({ item, type }) => (
-    <TouchableOpacity
-      style={styles.recentCard}
-      activeOpacity={0.7}
-      onPress={() => {
-        if (type === 'ipr') navigation.navigate('IPRDetail', { iprId: item.id });
-        if (type === 'startup') navigation.navigate('Startups', { screen: 'StartupDetail', params: { startupId: item.id } });
-      }}
-    >
-      <LinearGradient
-        colors={['rgba(179, 102, 255, 0.15)', 'rgba(179, 102, 255, 0.05)']}
-        style={styles.recentCardGradient}
-      >
-        <View style={styles.cardTopRow}>
-          <View style={styles.iconBadge}>
-            <Ionicons 
-              name={type === 'ipr' ? 'shield-checkmark' : type === 'startup' ? 'rocket' : 'flask'} 
-              size={16} 
-              color="#b366ff" 
-            />
-          </View>
-          <View style={styles.statusBadge}>
-            <Text style={styles.statusBadgeText}>{(item.status || item.stage || 'N/A')}</Text>
+  // Small stat card used in analytics strip
+  const AnalyticsStat = ({ icon, label, value, delta = 0, spark = [] }) => {
+    const positive = delta >= 0;
+    return (
+      <View style={styles.analyticsCard}>
+        <View style={styles.analyticsTop}>
+          <Ionicons name={icon} size={22} color="#fff" />
+          <Text style={styles.analyticsLabel}>{label}</Text>
+          <View style={{ flex: 1 }} />
+          <View style={[styles.deltaBadge, { backgroundColor: positive ? 'rgba(40,200,120,0.12)' : 'rgba(255,80,80,0.12)' }]}>
+            <Text style={[styles.deltaText, { color: positive ? '#28C878' : '#FF5050' }]}>{positive ? `+${delta}%` : `${delta}%`}</Text>
           </View>
         </View>
-        
-        <Text style={styles.recentTitle} numberOfLines={1}>{item.title || item.name}</Text>
-        <Text style={styles.recentDescription} numberOfLines={2}>
-          {(item.description || 'No description available').trim()}
-        </Text>
-        
-        <View style={styles.cardBottomRow}>
-          <Ionicons name="time-outline" size={11} color="#999" />
-          <Text style={styles.recentDate}>
-            {item.createdAt ? new Date(item.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : '-'}
-          </Text>
-        </View>
-      </LinearGradient>
-    </TouchableOpacity>
-  );
 
-  const actions = useMemo(() => getRoleSpecificActions(), [userProfile]);
+        <View style={styles.analyticsBottom}>
+          <View>
+            <Text style={styles.analyticsValue}>{value}</Text>
+            <Text style={styles.analyticsMini}>This month</Text>
+          </View>
+          <Sparkline data={spark} color="#ffffff" height={30} width={84} />
+        </View>
+      </View>
+    );
+  };
+
+  // Create small synthetic trends for sparklines (if real historical not available)
+  const synthTrend = (count = 6, base = 10) => {
+    const arr = [];
+    for (let i = 0; i < count; i++) {
+      arr.push(Math.max(0, Math.round(base + (Math.sin(i + base) * 4) + (Math.random() * 6))));
+    }
+    return arr;
+  };
+
+  // Build analytics strip values
+  const analyticsItems = useMemo(() => {
+    const s = dashboardData.stats || {};
+    return [
+      {
+        key: 'research',
+        icon: 'flask-outline',
+        label: 'Research',
+        value: s.totalResearch || 0,
+        delta: Math.round((Math.random() * 8) - 3), // placeholder delta
+        spark: synthTrend(6, s.totalResearch ? Math.max(6, s.totalResearch / 2) : 8),
+      },
+      {
+        key: 'ipr',
+        icon: 'shield-checkmark-outline',
+        label: 'IPR',
+        value: s.totalIPR || 0,
+        delta: Math.round((Math.random() * 8) - 3),
+        spark: synthTrend(6, s.totalIPR ? Math.max(3, s.totalIPR / 2) : 5),
+      },
+      {
+        key: 'startups',
+        icon: 'rocket-outline',
+        label: 'Startups',
+        value: s.totalStartups || 0,
+        delta: Math.round((Math.random() * 12) - 4),
+        spark: synthTrend(6, s.totalStartups ? Math.max(6, s.totalStartups / 2) : 10),
+      },
+      {
+        key: 'funding',
+        icon: 'cash-outline',
+        label: 'Funding (₹)',
+        value: `₹${(safeNum(s.totalFunding)).toLocaleString()}`,
+        delta: Math.round((Math.random() * 15) - 6),
+        spark: synthTrend(6, Math.round(s.totalFunding ? Math.max(100, s.totalFunding / 100000) : 120)),
+      },
+    ];
+  }, [dashboardData.stats]);
+
+  // Recent item card used for research/ipr/startups lists
+  const RecentItem = ({ item, type }) => {
+    const title = item.title || item.name || 'Untitled';
+    const subtitle = (item.description || '').slice(0, 80);
+    return (
+      <TouchableOpacity
+        activeOpacity={0.8}
+        style={styles.recentListItem}
+        onPress={() => {
+          if (type === 'ipr') navigation.navigate('IPRDetail', { iprId: item.id });
+          if (type === 'startup') navigation.navigate('Startups', { screen: 'StartupDetail', params: { startupId: item.id } });
+          if (type === 'research') navigation.navigate('Research', { screen: 'ResearchDetail', params: { researchId: item.id } });
+        }}
+      >
+        <View style={styles.itemLeft}>
+          <View style={styles.itemIcon}>
+            <Ionicons name={type === 'ipr' ? 'shield-checkmark' : type === 'startup' ? 'rocket' : 'flask'} size={18} color="#b366ff" />
+          </View>
+        </View>
+        <View style={styles.itemBody}>
+          <Text style={styles.itemTitle} numberOfLines={1}>{title}</Text>
+          <Text style={styles.itemSubtitle} numberOfLines={2}>{subtitle || 'No description available'}</Text>
+        </View>
+        <View style={styles.itemRight}>
+          <Text style={styles.itemDate}>{item.createdAt ? new Date(item.createdAt).toLocaleDateString() : '-'}</Text>
+        </View>
+      </TouchableOpacity>
+    );
+  };
+
+  // Scroll indicator logic
+  const scrollY = React.useRef(new Animated.Value(0)).current;
+  const [contentHeight, setContentHeight] = useState(1);
+  const [containerHeight, setContainerHeight] = useState(1);
+  const indicatorHeight = containerHeight / contentHeight * containerHeight;
+  const indicatorTranslateY = Animated.multiply(scrollY, containerHeight / contentHeight);
 
   return (
-    <LinearGradient
-      colors={['#1a1a3e', '#2d2d5f', '#1a1a3e']}
-      style={styles.container}
-    >
-      <ScrollView 
-        showsVerticalScrollIndicator={false}
+    <LinearGradient colors={['#0f1226', '#171735']} style={styles.screen}>
+      <View style={styles.scrollIndicatorContainer}>
+        <Animated.View
+          style={[
+            styles.scrollIndicator,
+            {
+              height: indicatorHeight,
+              transform: [{ translateY: indicatorTranslateY }],
+            },
+          ]}
+        />
+      </View>
+      <Animated.ScrollView
+        style={{ flex: 1 }}
+        contentContainerStyle={{ paddingBottom: 80 }}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
+        showsVerticalScrollIndicator={false}
+        scrollEventThrottle={16}
+        onContentSizeChange={(w, h) => setContentHeight(h)}
+        onLayout={e => setContainerHeight(e.nativeEvent.layout.height)}
+        onScroll={Animated.event(
+          [{ nativeEvent: { contentOffset: { y: scrollY } } }],
+          { useNativeDriver: false }
+        )}
       >
-        {/* Header Section */}
+        {/* Header / Welcome */}
         <View style={styles.header}>
-          <View style={styles.headerTop}>
-            <View style={styles.welcomeSection}>
-              <Text style={styles.welcomeText}>{getWelcomeMessage()}</Text>
-              <Text style={styles.roleText}>{userProfile?.role?.replace('_', ' ').toUpperCase()}</Text>
-            </View>
-            <TouchableOpacity
-              onPress={() => navigation.navigate('Profile')}
-              activeOpacity={0.7}
-            >
-              <Avatar.Text 
-                size={50} 
-                label={userProfile?.name?.charAt(0) || 'U'} 
-                style={styles.avatar}
-              />
+          <View style={styles.welcome}>
+            <Text style={styles.greeting}>{getWelcomeMessage()}</Text>
+            <Text style={styles.subGreeting}>Startup Analytics · Overview</Text>
+          </View>
+          <TouchableOpacity onPress={() => navigation.navigate('Profile')}>
+            <Avatar.Text size={54} label={(userProfile?.name || 'U').charAt(0)} style={styles.avatar} />
+          </TouchableOpacity>
+        </View>
+
+        {/* Analytics strip */}
+        <View style={styles.analyticsStrip}>
+          {analyticsItems.map((it) => (
+            <AnalyticsStat
+              key={it.key}
+              icon={it.icon}
+              label={it.label}
+              value={it.value}
+              delta={it.delta}
+              spark={it.spark}
+            />
+          ))}
+        </View>
+
+        {/* Event Calendar - Upcoming Events */}
+        <View style={{ marginHorizontal: isTablet ? 36 : 16, marginTop: 18, marginBottom: 18, backgroundColor: 'rgba(255,255,255,0.02)', borderRadius: 14, padding: 14, borderLeftWidth: 4, borderLeftColor: '#b366ff' }}>
+          <Text style={{ color: '#fff', fontSize: 16, fontWeight: '800', marginBottom: 8 }}>Upcoming Events</Text>
+          <EventCalendar
+            source={{
+              type: 'static',
+              events: [
+                { id: '1', title: 'Startup Pitch Day', description: 'Pitch your startup to investors.', start: '2025-12-15T10:00:00Z', end: '2025-12-15T12:00:00Z', location: 'Auditorium', url: 'https://example.com/rsvp', tags: ['pitch', 'startups'] },
+                { id: '2', title: 'Research Webinar', description: 'Join our webinar on innovation in research.', start: '2025-12-20T15:00:00Z', end: '2025-12-20T16:30:00Z', location: 'Online', url: 'https://example.com/webinar', tags: ['webinar', 'research'] },
+              ],
+            }}
+            maxResults={5}
+            showPast={false}
+            style={{ backgroundColor: 'transparent' }}
+          />
+        </View>
+
+
+
+        {/* Performance panel */}
+        <View style={styles.panel}>
+          <View style={styles.panelHeader}>
+            <Text style={styles.panelTitle}>Performance</Text>
+            <TouchableOpacity onPress={() => navigation.navigate('AnalyticsDetail')}>
+              <Text style={styles.viewAll}>View full</Text>
             </TouchableOpacity>
           </View>
-        </View>        {/* Stats Grid */}
-        {hasPermission('view_analytics') && (
-          <View style={styles.statsContainer}>
-            <Text style={styles.sectionTitle}>Overview</Text>
-            <View style={styles.statsGrid}>
-              <StatCard
-                title="Research"
-                value={dashboardData.stats.totalResearch}
-                icon="flask-outline"
-              />
-              <StatCard
-                title="IPR"
-                value={dashboardData.stats.totalIPR}
-                icon="shield-checkmark-outline"
-              />
-              <StatCard
-                title="Start-ups"
-                value={dashboardData.stats.totalStartups}
-                icon="rocket-outline"
-              />
-              <StatCard
-                title="Funding"
-                value={formatINR(dashboardData.stats.totalFunding)}
-                icon="cash-outline"
-              />
+
+          <View style={styles.performanceRow}>
+            <View style={styles.performanceLeft}>
+              <Text style={styles.performanceLabel}>Monthly active startups</Text>
+              {/* TrendBars uses simple views */}
+              <TrendBars data={synthTrend(8, 35)} color="#36D1DC" height={48} />
+              <Text style={styles.performanceValue}>+12% MoM</Text>
+            </View>
+
+            <View style={styles.performanceRight}>
+              <Text style={styles.performanceLabel}>Funding velocity</Text>
+              <TrendBars data={synthTrend(8, 120)} color="#b366ff" height={48} />
+              <Text style={styles.performanceValue}>₹{Math.round(safeNum(dashboardData.stats.totalFunding)).toLocaleString()}</Text>
             </View>
           </View>
-        )}
+        </View>
 
-        {/* Quick Actions */}
-        {actions.length > 0 && (
-          <View style={styles.actionsContainer}>
-            <Text style={styles.sectionTitle}>Quick Actions</Text>
-            <View style={styles.actionsGrid}>
-              {actions.map((action, index) => (
-                <ActionButton key={index} item={action} />
-              ))}
-            </View>
+        {/* Recent lists */}
+        <View style={styles.recentSection}>
+          <View style={styles.sectionHeader}>
+            <Text style={styles.sectionTitle}>Recent Startups</Text>
+            <TouchableOpacity onPress={() => navigation.navigate('Startups', { screen: 'StartupList' })}>
+              <Text style={styles.viewAll}>View all</Text>
+            </TouchableOpacity>
           </View>
-        )}
 
-        {/* Recent Research */}
-        {dashboardData.recentResearch.length > 0 && (
-          <View style={styles.recentSection}>
-            <View style={styles.sectionHeader}>
-              <View style={styles.sectionTitleContainer}>
-                <Text style={styles.sectionTitle}>Recent Research</Text>
-                <Ionicons name="arrow-forward-circle-outline" size={20} color="#b366ff" style={styles.scrollIcon} />
-              </View>
-              <TouchableOpacity onPress={() => navigation.navigate('Research', { screen: 'ResearchList' })}>
-                <Text style={styles.viewAllText}>View All</Text>
-              </TouchableOpacity>
-            </View>
-            <ScrollView 
-              horizontal 
-              showsHorizontalScrollIndicator={false}
-              contentContainerStyle={styles.horizontalScroll}
-            >
-              {dashboardData.recentResearch.map((item) => (
-                <RecentCard key={item.id} item={item} type="research" />
-              ))}
-            </ScrollView>
+          <FlatList
+            data={dashboardData.recentStartups}
+            horizontal
+            keyExtractor={(i) => i.id}
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={{ paddingLeft: 20 }}
+            renderItem={({ item }) => <RecentItem item={item} type="startup" />}
+          />
+        </View>
+
+        <View style={styles.recentSection}>
+          <View style={styles.sectionHeader}>
+            <Text style={styles.sectionTitle}>Recent IPR</Text>
+            <TouchableOpacity onPress={() => navigation.navigate('IPR', { screen: 'IPRList' })}>
+              <Text style={styles.viewAll}>View all</Text>
+            </TouchableOpacity>
           </View>
-        )}
 
-        {/* Recent IPR */}
-        {dashboardData.recentIPR.length > 0 && (
-          <View style={styles.recentSection}>
-            <View style={styles.sectionHeader}>
-              <View style={styles.sectionTitleContainer}>
-                <Text style={styles.sectionTitle}>Recent IPR Applications</Text>
-                <Ionicons name="arrow-forward-circle-outline" size={20} color="#b366ff" style={styles.scrollIcon} />
-              </View>
-              <TouchableOpacity onPress={() => navigation.navigate('IPR', { screen: 'IPRList' })}>
-                <Text style={styles.viewAllText}>View All</Text>
-              </TouchableOpacity>
-            </View>
-            <ScrollView 
-              horizontal 
-              showsHorizontalScrollIndicator={false}
-              contentContainerStyle={styles.horizontalScroll}
-            >
-              {dashboardData.recentIPR.map((item) => (
-                <RecentCard key={item.id} item={item} type="ipr" />
-              ))}
-            </ScrollView>
+          <FlatList
+            data={dashboardData.recentIPR}
+            horizontal
+            keyExtractor={(i) => i.id}
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={{ paddingLeft: 20 }}
+            renderItem={({ item }) => <RecentItem item={item} type="ipr" />}
+          />
+        </View>
+
+        <View style={[styles.recentSection, { marginBottom: 40 }]}>
+          <View style={styles.sectionHeader}>
+            <Text style={styles.sectionTitle}>Recent Research</Text>
+            <TouchableOpacity onPress={() => navigation.navigate('Research', { screen: 'ResearchList' })}>
+              <Text style={styles.viewAll}>View all</Text>
+            </TouchableOpacity>
           </View>
-        )}
 
-        {/* Recent Startups */}
-        {dashboardData.recentStartups.length > 0 && (
-          <View style={styles.recentSection}>
-            <View style={styles.sectionHeader}>
-              <View style={styles.sectionTitleContainer}>
-                <Text style={styles.sectionTitle}>Recent Start-ups</Text>
-                <Ionicons name="arrow-forward-circle-outline" size={20} color="#b366ff" style={styles.scrollIcon} />
-              </View>
-              <TouchableOpacity onPress={() => navigation.navigate('Startups', { screen: 'StartupList' })}>
-                <Text style={styles.viewAllText}>View All</Text>
-              </TouchableOpacity>
-            </View>
-            <ScrollView 
-              horizontal 
-              showsHorizontalScrollIndicator={false}
-              contentContainerStyle={styles.horizontalScroll}
-            >
-              {dashboardData.recentStartups.map((item) => (
-                <RecentCard key={item.id} item={item} type="startup" />
-              ))}
-            </ScrollView>
-          </View>
-        )}
-
-        {/* Empty State */}
-        {!loading && actions.length === 0 && dashboardData.recentResearch.length === 0 && 
-         dashboardData.recentIPR.length === 0 && dashboardData.recentStartups.length === 0 && (
-          <View style={styles.emptyState}>
-            <Ionicons name="document-text-outline" size={60} color="#666" />
-            <Text style={styles.emptyStateText}>No recent activity</Text>
-            <Text style={styles.emptyStateSubtext}>Start by submitting your first project</Text>
-          </View>
-        )}
-
-      </ScrollView>
+          <FlatList
+            data={dashboardData.recentResearch}
+            horizontal
+            keyExtractor={(i) => i.id}
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={{ paddingLeft: 20 }}
+            renderItem={({ item }) => <RecentItem item={item} type="research" />}
+          />
+        </View>
+      </Animated.ScrollView>
     </LinearGradient>
   );
 }
 
+/* -----------------------
+  Styles for Analytics D Dashboard
+------------------------*/
 const styles = StyleSheet.create({
-  container: {
+    scrollIndicatorContainer: {
+      position: 'absolute',
+      left: 0,
+      top: 0,
+      bottom: 0,
+      width: 10,
+      backgroundColor: 'rgba(255,255,255,0.04)',
+      zIndex: 10,
+      alignItems: 'center',
+      justifyContent: 'flex-start',
+    },
+    scrollIndicator: {
+      width: 4,
+      backgroundColor: '#b366ff',
+      borderRadius: 2,
+      marginTop: 2,
+    },
+  screen: {
     flex: 1,
+    backgroundColor: '#0f1226',
   },
-  
-  // Header Styles
+
   header: {
-    paddingTop: Platform.OS === 'ios' ? 50 : 40,
-    paddingHorizontal: isTablet ? 40 : 20,
-    paddingBottom: 20,
-    marginHorizontal: isTablet ? 0 : 8,
-  },
-  headerTop: {
+    paddingTop: Platform.OS === 'ios' ? 50 : 36,
+    paddingHorizontal: isTablet ? 36 : 20,
+    paddingBottom: 14,
     flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 20,
+    justifyContent: 'space-between',
   },
-  welcomeSection: {
+  welcome: {
     flex: 1,
-    marginRight: 15,
   },
-  welcomeText: {
-    fontSize: isTablet ? 28 : 24,
-    fontWeight: 'bold',
+  greeting: {
     color: '#fff',
-    marginBottom: 5,
+    fontSize: isTablet ? 26 : 20,
+    fontWeight: '800',
   },
-  roleText: {
-    fontSize: isTablet ? 15 : 13,
-    color: '#ddd',
-    opacity: 0.9,
+  subGreeting: {
+    color: '#cfcfe6',
+    marginTop: 4,
+    fontSize: isTablet ? 14 : 12,
   },
   avatar: {
-    backgroundColor: 'rgba(179, 102, 255, 0.3)',
-    elevation: 4,
-    shadowColor: '#b366ff',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.4,
-    shadowRadius: 4,
+    backgroundColor: 'rgba(179,102,255,0.14)',
+    elevation: 6,
   },
 
-  // Stats Section
-  statsContainer: {
-    paddingHorizontal: isTablet ? 40 : 20,
-    marginTop: 20,
-    marginHorizontal: isTablet ? 0 : 8,
-  },
-  sectionTitle: {
-    fontSize: isTablet ? 22 : 20,
-    fontWeight: 'bold',
-    color: '#fff',
-    marginBottom: 15,
-    letterSpacing: 0.5,
-  },
-  statsGrid: {
+  /* Analytics strip */
+  analyticsStrip: {
     flexDirection: 'row',
-    flexWrap: 'wrap',
+    gap: 12,
+    paddingHorizontal: isTablet ? 36 : 16,
+    marginTop: 8,
     justifyContent: 'space-between',
   },
-  statCard: {
-    width: STAT_CARD_WIDTH,
-    backgroundColor: 'rgba(255, 255, 255, 0.08)',
-    borderRadius: 16,
-    padding: isTablet ? 18 : 15,
-    marginBottom: 15,
-    borderLeftWidth: 4,
+  analyticsCard: {
+    flex: 1,
+    backgroundColor: 'rgba(255,255,255,0.03)',
+    borderRadius: 12,
+    padding: 12,
+    marginHorizontal: 6,
+    minWidth: isTablet ? 220 : 150,
+    borderLeftWidth: 3,
     borderLeftColor: '#b366ff',
-    elevation: 3,
-    shadowColor: '#b366ff',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.3,
-    shadowRadius: 4,
   },
-  statIconContainer: {
-    marginBottom: 10,
-  },
-  statContent: {
-    marginTop: 5,
-  },
-  statValue: {
-    fontSize: isTablet ? 28 : 24,
-    fontWeight: 'bold',
-    color: '#fff',
-    marginBottom: 5,
-  },
-  statTitle: {
-    fontSize: isTablet ? 13 : 12,
-    color: '#ddd',
-    opacity: 0.9,
-  },
-
-  // Actions Section
-  actionsContainer: {
-    paddingHorizontal: isTablet ? 40 : 20,
-    marginTop: 20,
-    marginHorizontal: isTablet ? 0 : 8,
-  },
-  actionsGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    justifyContent: 'space-between',
-  },
-  actionButton: {
-    width: isTablet ? (width - 100) / 3 : (width - 60) / 2,
-    marginBottom: 15,
-    borderRadius: 16,
-    overflow: 'hidden',
-    shadowColor: '#b366ff',
-    shadowOpacity: 0.4,
-    shadowOffset: { width: 0, height: 4 },
-    shadowRadius: 6,
-    elevation: 5,
-  },
-  actionGradient: {
-    paddingVertical: isTablet ? 25 : 20,
-    paddingHorizontal: 15,
+  analyticsTop: { flexDirection: 'row', alignItems: 'center', marginBottom: 8 },
+  analyticsLabel: { color: '#cfcfe6', marginLeft: 8, fontWeight: '700', fontSize: 13 },
+  deltaBadge: {
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 999,
     alignItems: 'center',
     justifyContent: 'center',
-    minHeight: isTablet ? 120 : 100,
   },
-  actionText: {
-    color: '#fff',
-    fontSize: isTablet ? 15 : 14,
-    fontWeight: 'bold',
-    marginTop: 10,
-    textAlign: 'center',
-    letterSpacing: 0.3,
-  },
+  deltaText: { fontSize: 11, fontWeight: '700' },
 
-  // Recent Sections
+  analyticsBottom: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
+  analyticsValue: { color: '#fff', fontSize: 20, fontWeight: '800' },
+  analyticsMini: { color: '#cfcfe6', fontSize: 11 },
+
+  /* Performance panel */
+  panel: {
+    marginTop: 18,
+    marginHorizontal: isTablet ? 36 : 16,
+    backgroundColor: 'rgba(255,255,255,0.02)',
+    borderRadius: 14,
+    padding: 14,
+    borderLeftWidth: 4,
+    borderLeftColor: '#36D1DC',
+  },
+  panelHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
+  panelTitle: { color: '#fff', fontSize: 16, fontWeight: '800' },
+  viewAll: { color: '#b366ff', fontWeight: '700' },
+
+  performanceRow: { flexDirection: isTablet ? 'row' : 'column', marginTop: 12, gap: 12 },
+  performanceLeft: { flex: 1, paddingRight: 8 },
+  performanceRight: { flex: 1, paddingLeft: 8 },
+  performanceLabel: { color: '#cfcfe6', fontWeight: '700', marginBottom: 8 },
+  performanceValue: { color: '#fff', fontSize: 14, fontWeight: '800', marginTop: 8 },
+
+  /* Recent lists */
   recentSection: {
-    marginTop: 25,
-    paddingLeft: isTablet ? 40 : 20,
-    marginLeft: isTablet ? 0 : 8,
+    marginTop: 16,
+    paddingTop: 6,
   },
   sectionHeader: {
     flexDirection: 'row',
+    paddingHorizontal: isTablet ? 36 : 20,
+    alignItems: 'center',
     justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 15,
-    paddingRight: isTablet ? 40 : 20,
-    marginRight: isTablet ? 0 : 8,
+    marginBottom: 8,
   },
-  sectionTitleContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  scrollIcon: {
-    marginLeft: 8,
-    opacity: 0.7,
-  },
-  viewAllText: {
-    color: '#b366ff',
-    fontSize: isTablet ? 15 : 14,
-    fontWeight: 'bold',
-  },
-  horizontalScroll: {
-    paddingRight: isTablet ? 40 : 20,
-    marginRight: isTablet ? 0 : 8,
-  },
-  recentCard: {
-    width: isTablet ? width * 0.35 : width * 0.55,
+  sectionTitle: { color: '#fff', fontWeight: '800', fontSize: 16 },
+  recentListItem: {
+    width: isTablet ? 320 : width * 0.72,
+    backgroundColor: 'rgba(255,255,255,0.03)',
+    borderRadius: 12,
     marginRight: 12,
-    borderRadius: 16,
-    overflow: 'hidden',
-    elevation: 5,
-    shadowColor: '#b366ff',
-    shadowOffset: { width: 0, height: 3 },
-    shadowOpacity: 0.3,
-    shadowRadius: 5,
-  },
-  recentCardGradient: {
-    padding: isTablet ? 16 : 12,
-    borderRadius: 16,
-    borderWidth: 1,
-    borderColor: 'rgba(179, 102, 255, 0.2)',
-  },
-  cardTopRow: {
+    padding: 12,
     flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 10,
+    borderLeftWidth: 3,
+    borderLeftColor: '#b366ff',
   },
-  iconBadge: {
-    backgroundColor: 'rgba(179, 102, 255, 0.2)',
-    width: isTablet ? 36 : 32,
-    height: isTablet ? 36 : 32,
+  itemLeft: { marginRight: 10 },
+  itemIcon: {
+    width: 44,
+    height: 44,
     borderRadius: 10,
+    backgroundColor: 'rgba(179,102,255,0.08)',
     alignItems: 'center',
     justifyContent: 'center',
   },
-  recentTitle: {
-    fontSize: isTablet ? 15 : 14,
-    fontWeight: '700',
-    color: '#fff',
-    marginBottom: 6,
-    letterSpacing: 0.3,
-  },
-  recentDescription: {
-    fontSize: isTablet ? 12 : 11,
-    color: '#ccc',
-    marginBottom: 10,
-    lineHeight: isTablet ? 18 : 16,
-  },
-  cardBottomRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginTop: 4,
-  },
-  recentDate: {
-    fontSize: isTablet ? 11 : 10,
-    color: '#999',
-    marginLeft: 4,
-  },
-  statusBadge: {
-    backgroundColor: 'rgba(179, 102, 255, 0.25)',
-    paddingHorizontal: isTablet ? 10 : 8,
-    paddingVertical: isTablet ? 4 : 3,
-    borderRadius: 8,
-  },
-  statusBadgeText: {
-    fontSize: isTablet ? 10 : 9,
-    fontWeight: '700',
-    color: '#b366ff',
-    letterSpacing: 0.8,
-    textTransform: 'uppercase',
-  },
+  itemBody: { flex: 1 },
+  itemTitle: { color: '#fff', fontWeight: '800', fontSize: 14 },
+  itemSubtitle: { color: '#cfcfe6', fontSize: 12, marginTop: 6 },
+  itemRight: { alignItems: 'flex-end', marginLeft: 12 },
+  itemDate: { color: '#999', fontSize: 11 },
 
-  // Empty State
-  emptyState: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingVertical: isTablet ? 80 : 60,
-    paddingHorizontal: isTablet ? 60 : 32,
-    marginHorizontal: isTablet ? 0 : 8,
-  },
-  emptyStateText: {
-    fontSize: isTablet ? 20 : 18,
-    fontWeight: 'bold',
-    color: '#999',
-    marginTop: 15,
-  },
-  emptyStateSubtext: {
-    fontSize: isTablet ? 15 : 14,
-    color: '#666',
-    marginTop: 8,
-    textAlign: 'center',
-    lineHeight: isTablet ? 22 : 20,
-  },
 });

@@ -223,47 +223,73 @@ export default function InnovationDetailScreen({ route, navigation }) {
   const availableTransitions = STAGE_TRANSITIONS[idea.stage] || [];
 
   return (
-    <View style={styles.container}>
-      {/* Header */}
-      <LinearGradient
-        colors={[getStageColor(idea.stage), '#667eea']}
-        style={styles.header}
-      >
-        <View style={styles.headerContent}>
-          <Title style={styles.headerTitle} numberOfLines={2}>
-            {idea.title}
-          </Title>
-          <StatusBadge status={idea.stage} color={getStageColor(idea.stage)} />
-        </View>
-        {idea.priority === 'high' && (
-          <View style={styles.priorityBadge}>
-            <Ionicons name="flag" size={16} color="#fff" />
-            <Text style={styles.priorityText}>High Priority</Text>
+    <LinearGradient
+      colors={["#1a1a3e", "#2d2d5f", "#1a1a3e"]}
+      style={styles.container}
+    >
+      {/* Modern Header */}
+      <View style={styles.header}>
+        <View style={styles.headerTop}>
+          <TouchableOpacity
+            style={styles.backButton}
+            onPress={() => navigation.goBack()}
+          >
+            <Ionicons name="arrow-back" size={24} color="#fff" />
+          </TouchableOpacity>
+          <View style={styles.headerTitleContainer}>
+            <Title style={styles.headerTitle}>{idea.title}</Title>
+            <StatusBadge status={idea.stage} color={getStageColor(idea.stage)} />
           </View>
-        )}
-      </LinearGradient>
+          <View style={styles.headerRight}>
+            {idea.priority === "high" && (
+              <View style={styles.priorityBadge}>
+                <Ionicons name="flag" size={16} color="#fff" />
+                <Text style={styles.priorityText}>High Priority</Text>
+              </View>
+            )}
+          </View>
+        </View>
+      </View>
 
       <ScrollView style={styles.content}>
-        {/* Basic Information */}
-        <View style={styles.section}>
+        {/* Modern Stats Cards */}
+        <View style={styles.statsContainer}>
+          <View style={styles.statCard}>
+            <Ionicons name="bulb" size={20} color="#b366ff" style={styles.statIcon} />
+            <Text style={styles.statValue}>{idea.stage}</Text>
+            <Text style={styles.statLabel}>Current Stage</Text>
+          </View>
+          <View style={styles.statCard}>
+            <Ionicons name="cash" size={20} color="#b366ff" style={styles.statIcon} />
+            <Text style={styles.statValue}>{idea.fundingRequested ? `₹${(idea.fundingRequested / 100000).toFixed(2)}L` : "-"}</Text>
+            <Text style={styles.statLabel}>Funding Requested</Text>
+          </View>
+          <View style={styles.statCard}>
+            <Ionicons name="people" size={20} color="#b366ff" style={styles.statIcon} />
+            <Text style={styles.statValue}>{idea.teamMembers ? idea.teamMembers.length : 0}</Text>
+            <Text style={styles.statLabel}>Team Members</Text>
+          </View>
+        </View>
+
+        {/* Modern Card Sections */}
+        <View style={styles.sectionCard}>
           <Text style={styles.sectionTitle}>Description</Text>
           <Text style={styles.description}>{idea.description}</Text>
-          
           <View style={styles.metaInfo}>
             <View style={styles.metaItem}>
-              <Ionicons name="person-outline" size={16} color="#666" />
+              <Ionicons name="person-outline" size={16} color="#b366ff" />
               <Text style={styles.metaText}>{idea.submitterName}</Text>
             </View>
             <View style={styles.metaItem}>
-              <Ionicons name="business-outline" size={16} color="#666" />
+              <Ionicons name="business-outline" size={16} color="#b366ff" />
               <Text style={styles.metaText}>{idea.organization}</Text>
             </View>
             <View style={styles.metaItem}>
-              <Ionicons name="folder-outline" size={16} color="#666" />
+              <Ionicons name="folder-outline" size={16} color="#b366ff" />
               <Text style={styles.metaText}>{idea.category}</Text>
             </View>
             <View style={styles.metaItem}>
-              <Ionicons name="calendar-outline" size={16} color="#666" />
+              <Ionicons name="calendar-outline" size={16} color="#b366ff" />
               <Text style={styles.metaText}>
                 Submitted: {new Date(idea.createdAt).toLocaleDateString()}
               </Text>
@@ -273,7 +299,7 @@ export default function InnovationDetailScreen({ route, navigation }) {
 
         {/* Tags */}
         {idea.tags && idea.tags.length > 0 && (
-          <View style={styles.section}>
+          <View style={styles.sectionCard}>
             <Text style={styles.sectionTitle}>Tags</Text>
             <View style={styles.tagsContainer}>
               {idea.tags.map((tag, index) => (
@@ -287,7 +313,7 @@ export default function InnovationDetailScreen({ route, navigation }) {
 
         {/* Problem Statement */}
         {idea.problemStatement && (
-          <View style={styles.section}>
+          <View style={styles.sectionCard}>
             <Text style={styles.sectionTitle}>Problem Statement</Text>
             <Text style={styles.content}>{idea.problemStatement}</Text>
           </View>
@@ -295,7 +321,7 @@ export default function InnovationDetailScreen({ route, navigation }) {
 
         {/* Solution */}
         {idea.solution && (
-          <View style={styles.section}>
+          <View style={styles.sectionCard}>
             <Text style={styles.sectionTitle}>Proposed Solution</Text>
             <Text style={styles.content}>{idea.solution}</Text>
           </View>
@@ -303,7 +329,7 @@ export default function InnovationDetailScreen({ route, navigation }) {
 
         {/* Market Potential */}
         {idea.marketPotential && (
-          <View style={styles.section}>
+          <View style={styles.sectionCard}>
             <Text style={styles.sectionTitle}>Market Potential</Text>
             <Text style={styles.content}>{idea.marketPotential}</Text>
           </View>
@@ -311,7 +337,7 @@ export default function InnovationDetailScreen({ route, navigation }) {
 
         {/* Funding Information */}
         {idea.fundingRequested && (
-          <View style={styles.section}>
+          <View style={styles.sectionCard}>
             <Text style={styles.sectionTitle}>Funding Information</Text>
             <View style={styles.fundingInfo}>
               <View style={styles.fundingItem}>
@@ -332,7 +358,7 @@ export default function InnovationDetailScreen({ route, navigation }) {
 
         {/* Team Members */}
         {idea.teamMembers && idea.teamMembers.length > 0 && (
-          <View style={styles.section}>
+          <View style={styles.sectionCard}>
             <Text style={styles.sectionTitle}>Team Members</Text>
             {idea.teamMembers.map((member, index) => (
               <View key={index} style={styles.teamMember}>
@@ -350,7 +376,7 @@ export default function InnovationDetailScreen({ route, navigation }) {
 
         {/* Mentors */}
         {mentors.length > 0 && (
-          <View style={styles.section}>
+          <View style={styles.sectionCard}>
             <Text style={styles.sectionTitle}>Assigned Mentors</Text>
             {mentors.map((mentor) => (
               <View key={mentor.id} style={styles.mentorCard}>
@@ -371,7 +397,7 @@ export default function InnovationDetailScreen({ route, navigation }) {
 
         {/* Collaborators */}
         {collaborators.length > 0 && (
-          <View style={styles.section}>
+          <View style={styles.sectionCard}>
             <Text style={styles.sectionTitle}>Collaborators</Text>
             {collaborators.map((collaborator) => (
               <View key={collaborator.id} style={styles.collaboratorCard}>
@@ -391,7 +417,7 @@ export default function InnovationDetailScreen({ route, navigation }) {
 
         {/* Documents */}
         {idea.documents && idea.documents.length > 0 && (
-          <View style={styles.section}>
+          <View style={styles.sectionCard}>
             <Text style={styles.sectionTitle}>Supporting Documents</Text>
             {idea.documents.map((doc, index) => (
               <TouchableOpacity
@@ -409,7 +435,7 @@ export default function InnovationDetailScreen({ route, navigation }) {
 
         {/* Links */}
         {idea.links && idea.links.length > 0 && (
-          <View style={styles.section}>
+          <View style={styles.sectionCard}>
             <Text style={styles.sectionTitle}>Relevant Links</Text>
             {idea.links.map((link, index) => (
               <TouchableOpacity
@@ -430,7 +456,7 @@ export default function InnovationDetailScreen({ route, navigation }) {
 
         {/* Timeline */}
         {timeline.length > 0 && (
-          <View style={styles.section}>
+          <View style={styles.sectionCard}>
             <Text style={styles.sectionTitle}>Activity Timeline</Text>
             {timeline.map((event) => (
               <View key={event.id} style={styles.timelineItem}>
@@ -506,7 +532,7 @@ export default function InnovationDetailScreen({ route, navigation }) {
           )}
         </View>
       </ScrollView>
-    </View>
+    </LinearGradient>
   );
 }
 

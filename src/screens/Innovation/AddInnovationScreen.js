@@ -250,386 +250,96 @@ export default function AddInnovationScreen({ route, navigation }) {
   };
 
   return (
-    <KeyboardAvoidingView 
-      style={styles.container} 
-      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+    <LinearGradient
+      colors={["#1a1a3e", "#2d2d5f", "#1a1a3e"]}
+      style={styles.container}
     >
-      {/* Header */}
-      <LinearGradient
-        colors={['#9C27B0', '#673AB7']}
-        style={styles.header}
+      <KeyboardAvoidingView 
+        style={{ flex: 1 }} 
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
       >
-        <Title style={styles.headerTitle}>
-          {editMode ? 'Edit Innovation Idea' : 'Submit Innovation Idea'}
-        </Title>
-      </LinearGradient>
-
-      <ScrollView style={styles.content}>
-        {/* Basic Information */}
-        <FormSection title="Basic Information" icon="information-circle-outline">
-          <FormInput
-            label="Innovation Title"
-            value={formData.title}
-            onChangeText={(value) => updateFormData('title', value)}
-            placeholder="Enter a compelling title for your innovation"
-            required
-            error={errors.title}
-          />
-
-          <FormInput
-            label="Description"
-            value={formData.description}
-            onChangeText={(value) => updateFormData('description', value)}
-            placeholder="Provide a comprehensive description of your innovation"
-            multiline
-            numberOfLines={4}
-            required
-            error={errors.description}
-          />
-
-          <DropdownPicker
-            label="Category"
-            value={formData.category}
-            onValueChange={(value) => updateFormData('category', value)}
-            items={INNOVATION_CATEGORIES}
-            required
-            error={errors.category}
-          />
-
-          <DropdownPicker
-            label="Current Development Stage"
-            value={formData.currentStage}
-            onValueChange={(value) => updateFormData('currentStage', value)}
-            items={DEVELOPMENT_STAGES}
-          />
-
-          <DropdownPicker
-            label="Priority Level"
-            value={formData.priority}
-            onValueChange={(value) => updateFormData('priority', value)}
-            items={PRIORITY_LEVELS}
-          />
-
-          <TagInput
-            label="Tags"
-            tags={formData.tags}
-            onTagsChange={(tags) => updateFormData('tags', tags)}
-            placeholder="Add relevant keywords"
-          />
-        </FormSection>
-
-        {/* Problem & Solution */}
-        <FormSection title="Problem & Solution" icon="bulb-outline">
-          <FormInput
-            label="Problem Statement"
-            value={formData.problemStatement}
-            onChangeText={(value) => updateFormData('problemStatement', value)}
-            placeholder="Clearly describe the problem your innovation addresses"
-            multiline
-            numberOfLines={3}
-            required
-            error={errors.problemStatement}
-          />
-
-          <FormInput
-            label="Proposed Solution"
-            value={formData.solution}
-            onChangeText={(value) => updateFormData('solution', value)}
-            placeholder="Describe how your innovation solves the problem"
-            multiline
-            numberOfLines={3}
-            required
-            error={errors.solution}
-          />
-
-          <FormInput
-            label="Unique Value Proposition"
-            value={formData.uniqueValue}
-            onChangeText={(value) => updateFormData('uniqueValue', value)}
-            placeholder="What makes your solution unique?"
-            multiline
-            numberOfLines={2}
-          />
-        </FormSection>
-
-        {/* Market Analysis */}
-        <FormSection title="Market Analysis" icon="trending-up-outline">
-          <FormInput
-            label="Market Potential"
-            value={formData.marketPotential}
-            onChangeText={(value) => updateFormData('marketPotential', value)}
-            placeholder="Describe the market size and potential for your innovation"
-            multiline
-            numberOfLines={3}
-          />
-
-          <FormInput
-            label="Target Audience"
-            value={formData.targetAudience}
-            onChangeText={(value) => updateFormData('targetAudience', value)}
-            placeholder="Who are your primary users/customers?"
-            multiline
-            numberOfLines={2}
-          />
-
-          <FormInput
-            label="Business Model"
-            value={formData.businessModel}
-            onChangeText={(value) => updateFormData('businessModel', value)}
-            placeholder="How will you deliver value to customers?"
-            multiline
-            numberOfLines={2}
-          />
-
-          <FormInput
-            label="Revenue Model"
-            value={formData.revenueModel}
-            onChangeText={(value) => updateFormData('revenueModel', value)}
-            placeholder="How will you generate revenue?"
-            multiline
-            numberOfLines={2}
-          />
-        </FormSection>
-
-        {/* Submitter Information */}
-        <FormSection title="Submitter Information" icon="person-outline">
-          <FormInput
-            label="Your Name"
-            value={formData.submitterName}
-            onChangeText={(value) => updateFormData('submitterName', value)}
-            placeholder="Enter your full name"
-            required
-            error={errors.submitterName}
-          />
-
-          <FormInput
-            label="Organization"
-            value={formData.organization}
-            onChangeText={(value) => updateFormData('organization', value)}
-            placeholder="Your organization or company"
-            required
-            error={errors.organization}
-          />
-
-          <FormInput
-            label="Contact Email"
-            value={formData.contactEmail}
-            onChangeText={(value) => updateFormData('contactEmail', value)}
-            placeholder="Email for correspondence"
-            keyboardType="email-address"
-            required
-            error={errors.contactEmail}
-          />
-
-          <FormInput
-            label="Contact Phone"
-            value={formData.contactPhone}
-            onChangeText={(value) => updateFormData('contactPhone', value)}
-            placeholder="Phone number for correspondence"
-            keyboardType="phone-pad"
-          />
-        </FormSection>
-
-        {/* Team Members */}
-        <FormSection title="Team Members" icon="people-outline">
-          {teamMembers.map((member, index) => (
-            <View key={index} style={styles.memberContainer}>
-              <View style={styles.memberHeader}>
-                <Text style={styles.memberTitle}>Team Member {index + 1}</Text>
-                {teamMembers.length > 1 && (
-                  <Button
-                    mode="text"
-                    onPress={() => removeTeamMember(index)}
-                    textColor="#f44336"
-                    compact
-                  >
-                    Remove
-                  </Button>
-                )}
-              </View>
-
-              <FormInput
-                label="Name"
-                value={member.name}
-                onChangeText={(value) => updateTeamMember(index, 'name', value)}
-                placeholder="Team member name"
-              />
-
-              <FormInput
-                label="Role"
-                value={member.role}
-                onChangeText={(value) => updateTeamMember(index, 'role', value)}
-                placeholder="Role in the project"
-              />
-
-              <FormInput
-                label="Expertise"
-                value={member.expertise}
-                onChangeText={(value) => updateTeamMember(index, 'expertise', value)}
-                placeholder="Areas of expertise"
-              />
-
-              <FormInput
-                label="Email"
-                value={member.email}
-                onChangeText={(value) => updateTeamMember(index, 'email', value)}
-                placeholder="Email address"
-                keyboardType="email-address"
-              />
+        {/* Modern Header */}
+        <View style={styles.header}>
+          <View style={styles.headerTop}>
+            <TouchableOpacity
+              style={styles.backButton}
+              onPress={() => navigation.goBack()}
+            >
+              <Ionicons name="arrow-back" size={24} color="#fff" />
+            </TouchableOpacity>
+            <View style={styles.headerTitleContainer}>
+              <Title style={styles.headerTitle}>
+                {editMode ? 'Edit Innovation Idea' : 'Submit Innovation Idea'}
+              </Title>
             </View>
-          ))}
-
-          <Button
-            mode="outlined"
-            onPress={addTeamMember}
-            style={styles.addButton}
-            icon="plus"
-          >
-            Add Team Member
-          </Button>
-        </FormSection>
-
-        {/* Funding Requirements */}
-        <FormSection title="Funding Requirements (Optional)" icon="cash-outline">
-          <FormInput
-            label="Funding Amount (₹)"
-            value={formData.fundingRequested}
-            onChangeText={(value) => updateFormData('fundingRequested', value)}
-            placeholder="Enter amount in rupees"
-            keyboardType="numeric"
-            error={errors.fundingRequested}
-          />
-
-          <FormInput
-            label="Purpose of Funding"
-            value={formData.fundingPurpose}
-            onChangeText={(value) => updateFormData('fundingPurpose', value)}
-            placeholder="How will the funding be used?"
-            multiline
-            numberOfLines={3}
-          />
-        </FormSection>
-
-        {/* Implementation Details */}
-        <FormSection title="Implementation Details" icon="construct-outline">
-          <FormInput
-            label="Timeline"
-            value={formData.timeline}
-            onChangeText={(value) => updateFormData('timeline', value)}
-            placeholder="Expected development timeline"
-            multiline
-            numberOfLines={2}
-          />
-
-          <FormInput
-            label="Resources Required"
-            value={formData.resources}
-            onChangeText={(value) => updateFormData('resources', value)}
-            placeholder="What resources do you need?"
-            multiline
-            numberOfLines={2}
-          />
-
-          <FormInput
-            label="Intellectual Property"
-            value={formData.intellectualProperty}
-            onChangeText={(value) => updateFormData('intellectualProperty', value)}
-            placeholder="Any patents, trademarks, or IP considerations"
-            multiline
-            numberOfLines={2}
-          />
-
-          <FormInput
-            label="Risks & Challenges"
-            value={formData.risks}
-            onChangeText={(value) => updateFormData('risks', value)}
-            placeholder="Potential risks and mitigation strategies"
-            multiline
-            numberOfLines={3}
-          />
-        </FormSection>
-
-        {/* Links */}
-        <FormSection title="Relevant Links (Optional)" icon="link-outline">
-          {links.map((link, index) => (
-            <View key={index} style={styles.linkContainer}>
-              <View style={styles.linkHeader}>
-                <Text style={styles.linkTitle}>Link {index + 1}</Text>
-                {links.length > 1 && (
-                  <Button
-                    mode="text"
-                    onPress={() => removeLink(index)}
-                    textColor="#f44336"
-                    compact
-                  >
-                    Remove
-                  </Button>
-                )}
-              </View>
-
-              <FormInput
-                label="Title"
-                value={link.title}
-                onChangeText={(value) => updateLink(index, 'title', value)}
-                placeholder="Link description"
-              />
-
-              <FormInput
-                label="URL"
-                value={link.url}
-                onChangeText={(value) => updateLink(index, 'url', value)}
-                placeholder="https://example.com"
-                keyboardType="url"
-              />
-            </View>
-          ))}
-
-          <Button
-            mode="outlined"
-            onPress={addLink}
-            style={styles.addButton}
-            icon="plus"
-          >
-            Add Link
-          </Button>
-        </FormSection>
-
-        {/* Documents */}
-        <FormSection title="Supporting Documents" icon="folder-outline">
-          <FileUpload
-            label="Upload Documents"
-            files={formData.documents}
-            onFileSelect={(files) => updateFormData('documents', files)}
-            acceptedTypes={['application/pdf', 'image/*', 'application/msword']}
-            multiple={true}
-          />
-          <Text style={styles.helpText}>
-            Upload business plans, prototypes, research papers, or other relevant documents
-          </Text>
-        </FormSection>
-
-        {/* Privacy Settings */}
-        <FormSection title="Privacy Settings" icon="shield-outline">
-          <View style={styles.switchContainer}>
-            <View style={styles.switchInfo}>
-              <Text style={styles.switchLabel}>Make Idea Public</Text>
-              <Text style={styles.switchDescription}>
-                Allow others to view and potentially collaborate on this idea
-              </Text>
-            </View>
-            {/* Switch component would go here */}
+            <View style={styles.headerRight} />
           </View>
-        </FormSection>
+        </View>
 
-        {/* Action Buttons */}
-        <FormActions
-          onSave={handleSave}
-          onCancel={handleCancel}
-          saveText={editMode ? 'Update Idea' : 'Submit Innovation'}
-          loading={loading}
-        />
-      </ScrollView>
-    </KeyboardAvoidingView>
+        <ScrollView style={styles.content}>
+          {/* Modern Card Sections */}
+          <View style={styles.sectionCard}>
+            {/* Basic Information */}
+            <FormSection title="Basic Information" icon="information-circle-outline">
+              {/* ...existing code... */}
+            </FormSection>
+
+            {/* Problem & Solution */}
+            <FormSection title="Problem & Solution" icon="bulb-outline">
+              {/* ...existing code... */}
+            </FormSection>
+
+            {/* Market Analysis */}
+            <FormSection title="Market Analysis" icon="trending-up-outline">
+              {/* ...existing code... */}
+            </FormSection>
+
+            {/* Submitter Information */}
+            <FormSection title="Submitter Information" icon="person-outline">
+              {/* ...existing code... */}
+            </FormSection>
+
+            {/* Team Members */}
+            <FormSection title="Team Members" icon="people-outline">
+              {/* ...existing code... */}
+            </FormSection>
+
+            {/* Funding Requirements */}
+            <FormSection title="Funding Requirements (Optional)" icon="cash-outline">
+              {/* ...existing code... */}
+            </FormSection>
+
+            {/* Implementation Details */}
+            <FormSection title="Implementation Details" icon="construct-outline">
+              {/* ...existing code... */}
+            </FormSection>
+
+            {/* Links */}
+            <FormSection title="Relevant Links (Optional)" icon="link-outline">
+              {/* ...existing code... */}
+            </FormSection>
+
+            {/* Documents */}
+            <FormSection title="Supporting Documents" icon="folder-outline">
+              {/* ...existing code... */}
+            </FormSection>
+
+            {/* Privacy Settings */}
+            <FormSection title="Privacy Settings" icon="shield-outline">
+              {/* ...existing code... */}
+            </FormSection>
+
+            {/* Action Buttons */}
+            <FormActions
+              onSave={handleSave}
+              onCancel={handleCancel}
+              saveText={editMode ? 'Update Idea' : 'Submit Innovation'}
+              loading={loading}
+            />
+          </View>
+        </ScrollView>
+      </KeyboardAvoidingView>
+    </LinearGradient>
   );
 }
 

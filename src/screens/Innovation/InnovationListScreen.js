@@ -252,17 +252,28 @@ export default function InnovationListScreen({ navigation }) {
   }
 
   return (
-    <View style={styles.container}>
-      {/* Header */}
-      <LinearGradient
-        colors={['#9C27B0', '#673AB7']}
-        style={styles.header}
-      >
-        <Title style={styles.headerTitle}>Innovation Hub</Title>
-        <Text style={styles.headerSubtitle}>
-          Ideas, Incubation & Innovation Ecosystem
-        </Text>
-      </LinearGradient>
+    <LinearGradient
+      colors={["#1a1a3e", "#2d2d5f", "#1a1a3e"]}
+      style={styles.container}
+    >
+      {/* Modern Header */}
+      <View style={styles.header}>
+        <View style={styles.headerTop}>
+          <TouchableOpacity
+            style={styles.backButton}
+            onPress={() => navigation.goBack()}
+          >
+            <Ionicons name="arrow-back" size={24} color="#fff" />
+          </TouchableOpacity>
+          <View style={styles.headerTitleContainer}>
+            <Title style={styles.headerTitle}>Innovation Hub</Title>
+            <Text style={styles.headerSubtitle}>
+              Ideas, Incubation & Innovation Ecosystem
+            </Text>
+          </View>
+          <View style={styles.headerRight} />
+        </View>
+      </View>
 
       <ScrollView
         style={styles.content}
@@ -270,35 +281,31 @@ export default function InnovationListScreen({ navigation }) {
           <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
         }
       >
-        {/* Stats Cards */}
+        {/* Modern Stats Cards */}
         <View style={styles.statsContainer}>
-          <StatCard
-            title="Total Ideas"
-            value={stats.totalIdeas}
-            icon="bulb-outline"
-            color="#9C27B0"
-          />
-          <StatCard
-            title="Under Review"
-            value={stats.underReview}
-            icon="hourglass-outline"
-            color="#FF9800"
-          />
-          <StatCard
-            title="In Incubation"
-            value={stats.inIncubation}
-            icon="rocket-outline"
-            color="#4CAF50"
-          />
-          <StatCard
-            title="Market Ready"
-            value={stats.marketReady}
-            icon="checkmark-circle-outline"
-            color="#2196F3"
-          />
+          <View style={styles.statCard}>
+            <Ionicons name="bulb" size={20} color="#b366ff" style={styles.statIcon} />
+            <Text style={styles.statValue}>{stats.totalIdeas}</Text>
+            <Text style={styles.statLabel}>Total Ideas</Text>
+          </View>
+          <View style={styles.statCard}>
+            <Ionicons name="hourglass" size={20} color="#b366ff" style={styles.statIcon} />
+            <Text style={styles.statValue}>{stats.underReview}</Text>
+            <Text style={styles.statLabel}>Under Review</Text>
+          </View>
+          <View style={styles.statCard}>
+            <Ionicons name="rocket" size={20} color="#b366ff" style={styles.statIcon} />
+            <Text style={styles.statValue}>{stats.inIncubation}</Text>
+            <Text style={styles.statLabel}>In Incubation</Text>
+          </View>
+          <View style={styles.statCard}>
+            <Ionicons name="checkmark-circle" size={20} color="#b366ff" style={styles.statIcon} />
+            <Text style={styles.statValue}>{stats.marketReady}</Text>
+            <Text style={styles.statLabel}>Market Ready</Text>
+          </View>
         </View>
 
-        {/* Quick Actions */}
+        {/* Modern Quick Actions */}
         {hasPermission('manage_innovations') && (
           <View style={styles.quickActions}>
             <ActionCard
@@ -318,13 +325,16 @@ export default function InnovationListScreen({ navigation }) {
           </View>
         )}
 
-        {/* Search and Filters */}
+        {/* Modern Search and Filters */}
         <View style={styles.searchSection}>
           <Searchbar
             placeholder="Search ideas, innovators, or keywords..."
             onChangeText={setSearchQuery}
             value={searchQuery}
             style={styles.searchbar}
+            iconColor="#b366ff"
+            placeholderTextColor="#888"
+            inputStyle={{ color: '#fff' }}
           />
 
           <ScrollView
@@ -333,21 +343,23 @@ export default function InnovationListScreen({ navigation }) {
             style={styles.filterContainer}
           >
             {IDEA_STAGES.map((stage) => (
-              <Chip
+              <TouchableOpacity
                 key={stage.key}
-                selected={selectedStage === stage.key}
                 onPress={() => setSelectedStage(stage.key)}
                 style={[
-                  styles.filterChip,
+                  styles.modernFilterChip,
                   selectedStage === stage.key && { backgroundColor: stage.color }
                 ]}
-                textStyle={[
-                  styles.filterChipText,
-                  selectedStage === stage.key && { color: '#fff' }
-                ]}
               >
-                {stage.label}
-              </Chip>
+                <Text
+                  style={[
+                    styles.filterChipText,
+                    selectedStage === stage.key && { color: '#fff', fontWeight: 'bold' }
+                  ]}
+                >
+                  {stage.label}
+                </Text>
+              </TouchableOpacity>
             ))}
           </ScrollView>
 
@@ -419,7 +431,7 @@ export default function InnovationListScreen({ navigation }) {
           label="Submit Idea"
         />
       )}
-    </View>
+    </LinearGradient>
   );
 }
 

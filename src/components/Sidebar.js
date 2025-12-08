@@ -53,6 +53,22 @@ export default function Sidebar({ navigation, currentRoute }) {
   const getNavigationItems = () => {
     const items = [
       {
+        name: 'Announcements',
+        icon: 'megaphone',
+        label: 'Announcements',
+        route: 'Announcements',
+        screen: 'Announcements',
+        show: true
+      },
+            {
+              name: 'StartupNews',
+              icon: 'newspaper',
+              label: 'Startup News',
+              route: 'StartupNews',
+              screen: 'StartupNews',
+              show: true
+            },
+      {
         name: 'Dashboard',
         icon: 'home',
         label: 'Dashboard',
@@ -91,6 +107,30 @@ export default function Sidebar({ navigation, currentRoute }) {
         route: 'Startups',
         screen: 'StartupList',
         show: hasPermission('view_startups') || hasPermission('submit_startup')
+      },
+      {
+        name: 'Funding',
+        icon: 'cash',
+        label: 'Funding',
+        route: 'Funding',
+        screen: 'Funding',
+        show: true
+      },
+      {
+        name: 'FundingOpportunities',
+        icon: 'gift',
+        label: 'Opportunities',
+        route: 'FundingOpportunities',
+        screen: 'FundingOpportunities',
+        show: true
+      },
+      {
+        name: 'FundingTracker',
+        icon: 'clipboard',
+        label: 'Tracker',
+        route: 'FundingTracker',
+        screen: 'FundingTracker',
+        show: true
       },
       {
         name: 'Profile',
@@ -210,7 +250,7 @@ export default function Sidebar({ navigation, currentRoute }) {
         {/* Navigation Items */}
         <ScrollView
           style={styles.navContainer}
-          showsVerticalScrollIndicator={false}
+          showsVerticalScrollIndicator={true}
         >
           <View style={styles.navSection}>
             {!isCollapsed && <Text style={styles.sectionTitle}>MAIN MENU</Text>}
