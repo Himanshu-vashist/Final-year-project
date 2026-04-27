@@ -6,7 +6,8 @@ import {
   TouchableOpacity,
   ScrollView,
   Dimensions,
-  Platform
+  Platform,
+  SafeAreaView
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
@@ -77,6 +78,14 @@ export default function Sidebar({ navigation, currentRoute }) {
         show: true
       },
       {
+        name: 'GlobalSearch',
+        icon: 'search',
+        label: 'Search',
+        route: 'GlobalSearch',
+        screen: 'GlobalSearch',
+        show: true
+      },
+      {
         name: 'Research',
         icon: 'flask',
         label: 'Research',
@@ -109,11 +118,35 @@ export default function Sidebar({ navigation, currentRoute }) {
         show: hasPermission('view_startups') || hasPermission('submit_startup')
       },
       {
+        name: 'Events',
+        icon: 'calendar',
+        label: 'Events',
+        route: 'Events',
+        screen: 'EventList',
+        show: true
+      },
+      {
+        name: 'LocalBusinessData',
+        icon: 'business',
+        label: 'Businesses',
+        route: 'LocalBusinessData',
+        screen: 'LocalBusinessData',
+        show: true
+      },
+      {
         name: 'Funding',
         icon: 'cash',
         label: 'Funding',
         route: 'Funding',
         screen: 'Funding',
+        show: true
+      },
+      {
+        name: 'Chatbot',
+        icon: 'chatbubbles-outline',
+        label: 'AI Assistant',
+        route: 'Chatbot',
+        screen: 'Chatbot',
         show: true
       },
       {
@@ -130,6 +163,14 @@ export default function Sidebar({ navigation, currentRoute }) {
         label: 'Tracker',
         route: 'FundingTracker',
         screen: 'FundingTracker',
+        show: true
+      },
+      {
+        name: 'LinkedInJobs',
+        icon: 'logo-linkedin',
+        label: 'LinkedIn Jobs',
+        route: 'LinkedInJobs',
+        screen: 'LinkedInJobs',
         show: true
       },
       {
@@ -154,6 +195,12 @@ export default function Sidebar({ navigation, currentRoute }) {
           navigation.navigate('MainTabs', { screen: 'Dashboard' });
         } else if (item.route === 'Profile') {
           navigation.navigate('Profile');
+        } else if (item.route === 'GlobalSearch') {
+          navigation.navigate('GlobalSearch');
+        } else if (item.route === 'Chatbot') {
+          navigation.navigate('Chatbot');
+        } else if (item.route === 'LinkedInJobs') {
+          navigation.navigate('LinkedInJobs');
         } else {
           // For other tabs, navigate to MainTabs with the nested route
           navigation.navigate('MainTabs', { 
@@ -250,6 +297,7 @@ export default function Sidebar({ navigation, currentRoute }) {
         {/* Navigation Items */}
         <ScrollView
           style={styles.navContainer}
+          contentContainerStyle={{ paddingBottom: 40 }}
           showsVerticalScrollIndicator={true}
         >
           <View style={styles.navSection}>
@@ -320,15 +368,12 @@ const styles = StyleSheet.create({
     height: '100%',
     borderRightWidth: 1,
     borderRightColor: 'rgba(179, 102, 255, 0.1)',
-    elevation: 10,
-    shadowColor: '#000',
-    shadowOffset: { width: 2, height: 0 },
-    shadowOpacity: 0.3,
-    shadowRadius: 10,
+    overflow: 'hidden',
   },
   sidebarContent: {
     flex: 1,
-    paddingVertical: 20,
+    height: '100%',
+    overflow: 'hidden',
   },
   header: {
     paddingHorizontal: 16,
@@ -414,6 +459,7 @@ const styles = StyleSheet.create({
   },
   navContainer: {
     flex: 1,
+    minHeight: 0,
   },
   navSection: {
     marginBottom: 24,

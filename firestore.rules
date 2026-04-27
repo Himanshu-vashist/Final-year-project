@@ -116,7 +116,7 @@ service cloud.firestore {
           isOwner(get(/databases/$(database)/documents/startups/$(startupId)).data.createdBy) || 
           isGovernmentUser()
         );
-      };
+      }
     }
     
     // Analytics collection - mainly for government users
@@ -141,7 +141,11 @@ service cloud.firestore {
     // Events collection
     match /events/{eventId} {
       allow read: if isAuthenticated();
-      allow create, update, delete: if isGovernmentUser();
+      allow create: if isAuthenticated();
+      allow update, delete: if isAuthenticated() && (
+        resource.data.createdBy == request.auth.uid ||
+        isGovernmentUser()
+      );
     }
     
     // Notifications collection

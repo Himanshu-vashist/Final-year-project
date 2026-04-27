@@ -31,6 +31,9 @@ import ProfileScreen from '../screens/ProfileScreen';
 import StartupNewsScreen from '../screens/StartupNewsScreen';
 import UnifiedAnnouncements from '../screens/UnifiedAnnouncements';
 
+// Search
+import GlobalSearchScreen from '../screens/Search/GlobalSearchScreen';
+
 // Research
 import ResearchListScreen from '../screens/Research/ResearchListScreen';
 import ResearchDetailScreen from '../screens/Research/ResearchDetailScreen';
@@ -53,8 +56,23 @@ import StartupListScreen from '../screens/Startup/StartupListScreen';
 import StartupDetailScreen from '../screens/Startup/StartupDetailScreen';
 import RegisterStartupScreen from '../screens/Startup/RegisterStartupScreen';
 
+// Events
+import EventListScreen from '../screens/Events/EventListScreen';
+import EventDetailScreen from '../screens/Events/EventDetailScreen';
+import CreateEventScreen from '../screens/Events/CreateEventScreen';
+import CalendarViewScreen from '../screens/Events/CalendarViewScreen';
+
 // Funding
 import FundingScreen from '../screens/FundingScreen';
+
+// Local Business Data
+import LocalBusinessDataScreen from '../screens/LocalBusinessDataScreen';
+
+// AI Chatbot
+import ChatbotScreen from '../screens/ChatbotScreen';
+
+// LinkedIn Jobs
+import LinkedInJobsScreen from '../screens/LinkedInJobsScreen';
 
 const Stack = createStackNavigator();
 const Tab = createBottomTabNavigator();
@@ -137,6 +155,20 @@ function StartupStack() {
 }
 
 /* ----------------------
+   Events stack
+   ---------------------- */
+function EventStack() {
+  return (
+    <Stack.Navigator screenOptions={{ headerShown: false }}>
+      <Stack.Screen name="EventList" component={EventListScreen} />
+      <Stack.Screen name="EventDetail" component={EventDetailScreen} />
+      <Stack.Screen name="CreateEvent" component={CreateEventScreen} />
+      <Stack.Screen name="CalendarView" component={CalendarViewScreen} />
+    </Stack.Navigator>
+  );
+}
+
+/* ----------------------
    Main tab navigator (fixed)
    ---------------------- */
 function MainTabs() {
@@ -204,6 +236,22 @@ function MainTabs() {
     });
   }
 
+  // Events - available to everyone
+  tabScreens.push({
+    name: 'Events',
+    component: EventStack,
+    icon: 'calendar',
+    label: 'Events',
+  });
+
+  // Local Business Data
+  tabScreens.push({
+    name: 'LocalBusinessData',
+    component: LocalBusinessDataScreen,
+    icon: 'business',
+    label: 'Businesses',
+  });
+
   // Funding related tabs (appear for most users)
   tabScreens.push({
     name: 'Funding',
@@ -235,8 +283,14 @@ function MainTabs() {
     icon: 'megaphone',
     label: 'Announcements',
   });
+  tabScreens.push({
+    name: 'LinkedInJobs',
+    component: LinkedInJobsScreen,
+    icon: 'logo-linkedin',
+    label: 'LinkedIn Jobs',
+  });
 
-  // If desktop we might hide tab bar (you already do this elsewhere)
+  // If desktop we might hide tab bar
   return (
     <Tab.Navigator
       screenOptions={({ route }) => {
@@ -290,6 +344,14 @@ function MainDrawer() {
           )}
         </Stack.Screen>
 
+        <Stack.Screen name="GlobalSearch">
+          {(props) => (
+            <DesktopLayoutWrapper {...props}>
+              <GlobalSearchScreen {...props} />
+            </DesktopLayoutWrapper>
+          )}
+        </Stack.Screen>
+
         <Stack.Screen name="Funding">
           {(props) => (
             <DesktopLayoutWrapper {...props}>
@@ -321,6 +383,37 @@ function MainDrawer() {
             </DesktopLayoutWrapper>
           )}
         </Stack.Screen>
+
+        <Stack.Screen name="Events">
+          {(props) => (
+            <DesktopLayoutWrapper {...props}>
+              <EventStack {...props} />
+            </DesktopLayoutWrapper>
+          )}
+        </Stack.Screen>
+
+        <Stack.Screen name="LocalBusinessData">
+          {(props) => (
+            <DesktopLayoutWrapper {...props}>
+              <LocalBusinessDataScreen {...props} />
+            </DesktopLayoutWrapper>
+          )}
+        </Stack.Screen>
+
+        <Stack.Screen name="Chatbot">
+          {(props) => (
+            <DesktopLayoutWrapper {...props}>
+              <ChatbotScreen {...props} />
+            </DesktopLayoutWrapper>
+          )}
+        </Stack.Screen>
+        <Stack.Screen name="LinkedInJobs">
+          {(props) => (
+            <DesktopLayoutWrapper {...props}>
+              <LinkedInJobsScreen {...props} />
+            </DesktopLayoutWrapper>
+          )}
+        </Stack.Screen>
       </Stack.Navigator>
     );
   }
@@ -341,6 +434,14 @@ function MainDrawer() {
         options={{
           drawerLabel: 'Dashboard',
           drawerIcon: ({ color }) => <Ionicons name="home-outline" size={22} color={color} />,
+        }}
+      />
+      <Drawer.Screen
+        name="GlobalSearch"
+        component={GlobalSearchScreen}
+        options={{
+          drawerLabel: 'Search',
+          drawerIcon: ({ color }) => <Ionicons name="search" size={22} color={color} />,
         }}
       />
       <Drawer.Screen
@@ -384,6 +485,38 @@ function MainDrawer() {
         }}
       />
       <Drawer.Screen
+        name="Events"
+        component={EventStack}
+        options={{
+          drawerIcon: ({ color }) => <Ionicons name="calendar" size={22} color={color} />,
+          drawerLabel: 'Events',
+        }}
+      />
+      <Drawer.Screen
+        name="LocalBusinessData"
+        component={LocalBusinessDataScreen}
+        options={{
+          drawerIcon: ({ color }) => <Ionicons name="business" size={22} color={color} />,
+          drawerLabel: 'Businesses',
+        }}
+      />
+      <Drawer.Screen
+        name="Chatbot"
+        component={ChatbotScreen}
+        options={{
+          drawerIcon: ({ color }) => <Ionicons name="chatbubbles-outline" size={22} color={color} />,
+          drawerLabel: 'AI Assistant',
+        }}
+      />
+      <Drawer.Screen
+        name="LinkedInJobs"
+        component={LinkedInJobsScreen}
+        options={{
+          drawerIcon: ({ color }) => <Ionicons name="logo-linkedin" size={22} color={color} />,
+          drawerLabel: 'LinkedIn Jobs',
+        }}
+      />
+      <Drawer.Screen
         name="Profile"
         component={ProfileScreen}
         options={{
@@ -402,7 +535,6 @@ function RootNavigator() {
   const { theme, isDarkMode, isLoading: themeLoading } = useTheme();
 
   if (loading || themeLoading || !theme) {
-    // simple loading indicator while contexts initialize
     return (
       <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
         <ActivityIndicator size="large" />

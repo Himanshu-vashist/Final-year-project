@@ -117,7 +117,7 @@ export default function EventCalendar({
 
       // Optionally filter out past events
       const now = new Date();
-      const filtered = items.filter(ev => showPast || new Date(ev.start) >= now).sort((a,b)=> new Date(a.start) - new Date(b.start));
+      const filtered = items.filter(ev => showPast || new Date(ev.start) >= now).sort((a, b) => new Date(a.start) - new Date(b.start));
       setEvents(filtered);
     } catch (err) {
       console.error(err);
@@ -147,17 +147,64 @@ export default function EventCalendar({
 
   function renderEvent({ item }) {
     return (
-      <Card style={styles.card} elevation={2}>
-        <Card.Content>
-          <Title>{item.title}</Title>
-          <Paragraph>{formatDateRange(item.start, item.end)}</Paragraph>
-          {item.location ? <Paragraph style={{ marginTop: 6 }}>{item.location}</Paragraph> : null}
-          {item.description ? <Paragraph numberOfLines={3} style={{ marginTop: 8 }}>{item.description}</Paragraph> : null}
-        </Card.Content>
-        <Card.Actions>
-          {item.url ? <Button onPress={() => Linking.openURL(item.url)}>View / RSVP</Button> : null}
-          {item.location ? <Button onPress={() => { /* optionally open Maps with query */ Linking.openURL(`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(item.location)}`); }}>Open map</Button> : null}
-        </Card.Actions>
+      <Card style={styles.card} elevation={0}>
+        <Surface style={styles.cardSurface}>
+          <View style={styles.cardHeader}>
+            <View style={styles.dateBadge}>
+              <Text style={styles.dateBadgeDay}>{new Date(item.start).getDate()}</Text>
+              <Text style={styles.dateBadgeMonth}>
+                {new Date(item.start).toLocaleDateString(undefined, { month: 'short' })}
+              </Text>
+            </View>
+            <View style={styles.headerTitleContainer}>
+              <Title style={styles.eventTitle}>{item.title}</Title>
+              <View style={styles.timeContainer}>
+                <Ionicons name="time-outline" size={14} color="#666" />
+                <Text style={styles.timeText}>{formatDateRange(item.start, item.end)}</Text>
+              </View>
+            </View>
+          </View>
+
+          <Card.Content style={styles.cardContent}>
+            {item.location ? (
+              <View style={styles.locationContainer}>
+                <Ionicons name="location-outline" size={14} color="#666" />
+                <Paragraph style={styles.locationText}>{item.location}</Paragraph>
+              </View>
+            ) : null}
+            {item.description ? (
+              <Paragraph numberOfLines={2} style={styles.descriptionText}>
+                {item.description}
+              </Paragraph>
+            ) : null}
+          </Card.Content>
+
+          <Card.Actions style={styles.cardActions}>
+            {item.url ? (
+              <Button
+                mode="contained"
+                onPress={() => Linking.openURL(item.url)}
+                style={styles.rsvpButton}
+                labelStyle={styles.rsvpButtonLabel}
+              >
+                RSVP
+              </Button>
+            ) : null}
+            <Button
+              mode="text"
+              onPress={() => {
+                Linking.openURL(
+                  `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(
+                    item.location || item.title
+                  )}`
+                );
+              }}
+              labelStyle={styles.mapButtonLabel}
+            >
+              Directions
+            </Button>
+          </Card.Actions>
+        </Surface>
       </Card>
     );
   }
@@ -196,11 +243,126 @@ export default function EventCalendar({
 
 // ---------- Styles ----------
 const styles = StyleSheet.create({
-  container: { flex: 1, padding: 12 },
-  card: { marginVertical: 8 },
-  search: { marginBottom: 8 },
-  pillsRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 8 },
-  chip: { marginRight: 6, marginBottom: 6 },
+  container: { flex: 1, padding: 0 },
+  card: {
+    marginVertical: 10,
+    backgroundColor: 'transparent',
+  },
+  cardSurface: {
+    borderRadius: 20,
+    backgroundColor: '#fff',
+    padding: 16,
+    elevation: 4,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.08,
+    shadowRadius: 10,
+  },
+  cardHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 12,
+  },
+  dateBadge: {
+    width: 50,
+    height: 55,
+    borderRadius: 12,
+    backgroundColor: '#f0e6ff',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 16,
+  },
+  dateBadgeDay: {
+    fontSize: 18,
+    fontWeight: '800',
+    color: '#b366ff',
+  },
+  dateBadgeMonth: {
+    fontSize: 11,
+    fontWeight: '700',
+    color: '#b366ff',
+    textTransform: 'uppercase',
+  },
+  headerTitleContainer: {
+    flex: 1,
+  },
+  eventTitle: {
+    fontSize: 18,
+    fontWeight: '800',
+    color: '#333',
+    lineHeight: 22,
+    marginBottom: 4,
+  },
+  timeContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  timeText: {
+    fontSize: 13,
+    color: '#666',
+    fontWeight: '500',
+  },
+  cardContent: {
+    paddingHorizontal: 0,
+    paddingVertical: 0,
+    marginBottom: 12,
+  },
+  locationContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    marginBottom: 8,
+  },
+  locationText: {
+    fontSize: 13,
+    color: '#666',
+    fontWeight: '500',
+    marginVertical: 0,
+  },
+  descriptionText: {
+    fontSize: 14,
+    color: '#777',
+    lineHeight: 20,
+  },
+  cardActions: {
+    paddingHorizontal: 0,
+    justifyContent: 'flex-start',
+    gap: 8,
+  },
+  rsvpButton: {
+    borderRadius: 10,
+    backgroundColor: '#b366ff',
+    paddingHorizontal: 8,
+  },
+  rsvpButtonLabel: {
+    fontSize: 13,
+    fontWeight: '700',
+    color: '#fff',
+  },
+  mapButtonLabel: {
+    fontSize: 13,
+    fontWeight: '700',
+    color: '#b366ff',
+  },
+  search: {
+    marginBottom: 16,
+    borderRadius: 12,
+    backgroundColor: '#f8f9fa',
+    elevation: 0,
+    borderWidth: 1,
+    borderColor: '#eee',
+  },
+  pillsRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+    marginBottom: 16,
+  },
+  chip: {
+    borderRadius: 20,
+    height: 36,
+  },
 });
 
 // ---------- How to use ----------

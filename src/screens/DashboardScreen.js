@@ -303,9 +303,17 @@ export default function DashboardScreen({ navigation }) {
             <Text style={styles.greeting}>{getWelcomeMessage()}</Text>
             <Text style={styles.subGreeting}>Startup Analytics · Overview</Text>
           </View>
-          <TouchableOpacity onPress={() => navigation.navigate('Profile')}>
-            <Avatar.Text size={54} label={(userProfile?.name || 'U').charAt(0)} style={styles.avatar} />
-          </TouchableOpacity>
+          <View style={styles.headerActions}>
+            <TouchableOpacity 
+              style={styles.searchButton}
+              onPress={() => navigation.navigate('GlobalSearch')}
+            >
+              <Ionicons name="search" size={24} color="#fff" />
+            </TouchableOpacity>
+            <TouchableOpacity onPress={() => navigation.navigate('Profile')}>
+              <Avatar.Text size={54} label={(userProfile?.name || 'U').charAt(0)} style={styles.avatar} />
+            </TouchableOpacity>
+          </View>
         </View>
 
         {/* Analytics strip */}
@@ -475,6 +483,19 @@ const styles = StyleSheet.create({
   avatar: {
     backgroundColor: 'rgba(179,102,255,0.14)',
     elevation: 6,
+  },
+  headerActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  searchButton: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: 'rgba(179,102,255,0.2)',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
 
   /* Analytics strip */
