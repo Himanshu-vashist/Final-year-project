@@ -138,7 +138,8 @@ export function AuthProvider({ children }) {
 
   const signUp = async (email, password, profileData) => {
     try {
-      const { user } = await createUserWithEmailAndPassword(auth, email, password);
+      const trimmedEmail = email.trim();
+      const { user } = await createUserWithEmailAndPassword(auth, trimmedEmail, password);
       const profile = await createUserProfile(user.uid, { ...profileData, email });
       setUserProfile(profile);
       return { user, profile };
@@ -150,7 +151,8 @@ export function AuthProvider({ children }) {
 
   const signIn = async (email, password) => {
     try {
-      const { user } = await signInWithEmailAndPassword(auth, email, password);
+      const trimmedEmail = email.trim();
+      const { user } = await signInWithEmailAndPassword(auth, trimmedEmail, password);
       const profile = await getUserProfile(user.uid);
       setUserProfile(profile);
       return { user, profile };

@@ -3,17 +3,19 @@ import { View, StyleSheet, ScrollView } from 'react-native';
 import { Card, Title, Paragraph, ProgressBar, Text, Chip } from 'react-native-paper';
 import { Ionicons } from '@expo/vector-icons';
 import moment from 'moment';
+import { useTheme } from '../context/ThemeContext';
 
 const IPR_STAGES = {
-  draft: { index: 0, color: '#9E9E9E', label: 'Draft' },
-  filed: { index: 1, color: '#2196F3', label: 'Filed' },
-  published: { index: 2, color: '#FF9800', label: 'Published' },
-  examined: { index: 3, color: '#9C27B0', label: 'Under Examination' },
-  granted: { index: 4, color: '#4CAF50', label: 'Granted' },
-  rejected: { index: 5, color: '#F44336', label: 'Rejected' }
+  filed: { index: 0, color: '#818cf8', label: 'Filed' },
+  under_review: { index: 1, color: '#fbbf24', label: 'Under Review' },
+  published: { index: 2, color: '#a78bfa', label: 'Published' },
+  examined: { index: 3, color: '#60a5fa', label: 'Examined' },
+  granted: { index: 4, color: '#34d399', label: 'Granted' },
+  rejected: { index: 5, color: '#f87171', label: 'Rejected' }
 };
 
 export const IPRTrackingComponent = ({ application, isGovernmentView = false }) => {
+  const { theme } = useTheme();
   const currentStage = IPR_STAGES[application.status];
   const progress = currentStage ? (currentStage.index / (Object.keys(IPR_STAGES).length - 1)) : 0;
 
@@ -97,7 +99,7 @@ export const IPRTrackingComponent = ({ application, isGovernmentView = false }) 
             <View style={styles.detail}>
               <Ionicons name="document-text-outline" size={20} color="#757575" />
               <Text style={styles.detailText}>
-                Application ID: {application.applicationNumber}
+                Application ID: {application.applicationNumber || application.id?.substring(0, 10).toUpperCase()}
               </Text>
             </View>
             <View style={styles.detail}>

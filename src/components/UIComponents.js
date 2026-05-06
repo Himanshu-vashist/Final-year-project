@@ -128,10 +128,11 @@ const styles = StyleSheet.create({
   statCard: {
     padding: 16,
     marginBottom: 12,
-    borderRadius: 12,
+    borderRadius: 16,
     borderLeftWidth: 4,
-    elevation: 2,
-    backgroundColor: '#fff',
+    backgroundColor: 'rgba(255, 255, 255, 0.05)',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.1)',
   },
   statContent: {
     flexDirection: 'row',
@@ -144,16 +145,16 @@ const styles = StyleSheet.create({
   statValue: {
     fontSize: 24,
     fontWeight: 'bold',
-    color: '#333',
+    color: '#fff',
   },
   statTitle: {
     fontSize: 14,
-    color: '#666',
+    color: '#a0a0b0',
     marginTop: 4,
   },
   statSubtitle: {
     fontSize: 12,
-    color: '#999',
+    color: '#808090',
     marginTop: 2,
   },
   actionCard: {
@@ -161,9 +162,10 @@ const styles = StyleSheet.create({
   },
   actionSurface: {
     padding: 16,
-    borderRadius: 12,
-    elevation: 2,
-    backgroundColor: '#fff',
+    borderRadius: 16,
+    backgroundColor: 'rgba(255, 255, 255, 0.05)',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.1)',
     flexDirection: 'row',
     alignItems: 'center',
   },
@@ -181,18 +183,19 @@ const styles = StyleSheet.create({
   actionTitle: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#333',
+    color: '#fff',
     marginBottom: 4,
   },
   actionDescription: {
     fontSize: 14,
-    color: '#666',
+    color: '#a0a0b0',
   },
   infoCard: {
     padding: 16,
-    borderRadius: 12,
-    elevation: 2,
-    backgroundColor: '#fff',
+    borderRadius: 16,
+    backgroundColor: 'rgba(255, 255, 255, 0.05)',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.1)',
     marginBottom: 16,
   },
   infoHeader: {
@@ -203,21 +206,21 @@ const styles = StyleSheet.create({
   infoTitle: {
     fontSize: 18,
     fontWeight: '600',
-    color: '#333',
+    color: '#fff',
     marginLeft: 8,
   },
   infoContent: {
     // Content styles handled by children
   },
   statusBadge: {
-    paddingHorizontal: 8,
+    paddingHorizontal: 10,
     paddingVertical: 4,
     borderRadius: 12,
     alignSelf: 'flex-start',
   },
   statusText: {
     fontSize: 12,
-    fontWeight: '600',
+    fontWeight: '700',
   },
   emptyState: {
     alignItems: 'center',
@@ -227,33 +230,36 @@ const styles = StyleSheet.create({
   emptyTitle: {
     fontSize: 18,
     fontWeight: 'bold',
-    color: '#333',
+    color: '#fff',
     marginTop: 16,
     marginBottom: 8,
   },
   emptyDescription: {
     fontSize: 14,
-    color: '#666',
+    color: '#a0a0b0',
     textAlign: 'center',
     lineHeight: 20,
   },
   emptyAction: {
-    backgroundColor: '#667eea',
+    backgroundColor: 'rgba(179, 102, 255, 0.2)',
+    borderWidth: 1,
+    borderColor: 'rgba(179, 102, 255, 0.5)',
     paddingHorizontal: 24,
     paddingVertical: 12,
-    borderRadius: 8,
+    borderRadius: 12,
     marginTop: 20,
   },
   emptyActionText: {
-    color: '#fff',
+    color: '#b366ff',
     fontSize: 14,
-    fontWeight: '600',
+    fontWeight: 'bold',
   },
   loadingCard: {
     padding: 16,
-    borderRadius: 12,
-    elevation: 2,
-    backgroundColor: '#fff',
+    borderRadius: 16,
+    backgroundColor: 'rgba(255, 255, 255, 0.05)',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.1)',
     marginBottom: 12,
   },
   loadingContent: {
@@ -261,7 +267,7 @@ const styles = StyleSheet.create({
   },
   loadingLine: {
     height: 12,
-    backgroundColor: '#f0f0f0',
+    backgroundColor: 'rgba(255, 255, 255, 0.1)',
     borderRadius: 6,
     marginBottom: 8,
   },

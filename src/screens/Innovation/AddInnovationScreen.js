@@ -6,10 +6,12 @@ import {
   ScrollView,
   Alert,
   KeyboardAvoidingView,
-  Platform
+  Platform,
+  TouchableOpacity
 } from 'react-native';
 import { Title, Button, Chip } from 'react-native-paper';
 import { LinearGradient } from 'expo-linear-gradient';
+import { Ionicons } from '@expo/vector-icons';
 import { doc, addDoc, updateDoc, getDoc, collection } from 'firebase/firestore';
 import { db } from '../../config/firebaseConfig';
 import { useAuth } from '../../context/AuthContext';
@@ -279,54 +281,305 @@ export default function AddInnovationScreen({ route, navigation }) {
         <ScrollView style={styles.content}>
           {/* Modern Card Sections */}
           <View style={styles.sectionCard}>
+            
             {/* Basic Information */}
             <FormSection title="Basic Information" icon="information-circle-outline">
-              {/* ...existing code... */}
+              <FormInput
+                label="Innovation Title"
+                placeholder="Enter a catchy title"
+                value={formData.title}
+                onChangeText={(val) => updateFormData('title', val)}
+                error={errors.title}
+                required
+              />
+              <FormInput
+                label="Brief Description"
+                placeholder="Short summary of your idea"
+                value={formData.description}
+                onChangeText={(val) => updateFormData('description', val)}
+                multiline
+                numberOfLines={3}
+                error={errors.description}
+                required
+              />
+              <DropdownPicker
+                label="Category"
+                value={formData.category}
+                onValueChange={(val) => updateFormData('category', val)}
+                items={INNOVATION_CATEGORIES}
+                error={errors.category}
+                required
+              />
+              <DropdownPicker
+                label="Priority Level"
+                value={formData.priority}
+                onValueChange={(val) => updateFormData('priority', val)}
+                items={PRIORITY_LEVELS}
+              />
+              <TagInput
+                label="Tags/Keywords"
+                tags={formData.tags}
+                onTagsChange={(tags) => updateFormData('tags', tags)}
+              />
             </FormSection>
 
             {/* Problem & Solution */}
             <FormSection title="Problem & Solution" icon="bulb-outline">
-              {/* ...existing code... */}
+              <FormInput
+                label="Problem Statement"
+                placeholder="What problem does this solve?"
+                value={formData.problemStatement}
+                onChangeText={(val) => updateFormData('problemStatement', val)}
+                multiline
+                numberOfLines={4}
+                error={errors.problemStatement}
+                required
+              />
+              <FormInput
+                label="Proposed Solution"
+                placeholder="How does your innovation solve it?"
+                value={formData.solution}
+                onChangeText={(val) => updateFormData('solution', val)}
+                multiline
+                numberOfLines={4}
+                error={errors.solution}
+                required
+              />
+              <FormInput
+                label="Unique Value Proposition"
+                placeholder="What makes your solution different/better?"
+                value={formData.uniqueValue}
+                onChangeText={(val) => updateFormData('uniqueValue', val)}
+                multiline
+                numberOfLines={3}
+              />
             </FormSection>
 
             {/* Market Analysis */}
             <FormSection title="Market Analysis" icon="trending-up-outline">
-              {/* ...existing code... */}
+              <FormInput
+                label="Market Potential"
+                placeholder="Size and characteristics of the market"
+                value={formData.marketPotential}
+                onChangeText={(val) => updateFormData('marketPotential', val)}
+                multiline
+                numberOfLines={3}
+              />
+              <FormInput
+                label="Target Audience"
+                placeholder="Who will use this?"
+                value={formData.targetAudience}
+                onChangeText={(val) => updateFormData('targetAudience', val)}
+              />
+              <FormInput
+                label="Business Model"
+                placeholder="How will this operate?"
+                value={formData.businessModel}
+                onChangeText={(val) => updateFormData('businessModel', val)}
+                multiline
+                numberOfLines={3}
+              />
+              <FormInput
+                label="Revenue Model"
+                placeholder="How will this generate income?"
+                value={formData.revenueModel}
+                onChangeText={(val) => updateFormData('revenueModel', val)}
+              />
             </FormSection>
 
             {/* Submitter Information */}
             <FormSection title="Submitter Information" icon="person-outline">
-              {/* ...existing code... */}
+              <FormInput
+                label="Submitter Name"
+                value={formData.submitterName}
+                onChangeText={(val) => updateFormData('submitterName', val)}
+                error={errors.submitterName}
+                required
+              />
+              <FormInput
+                label="Organization/Institution"
+                value={formData.organization}
+                onChangeText={(val) => updateFormData('organization', val)}
+                error={errors.organization}
+                required
+              />
+              <FormInput
+                label="Contact Email"
+                value={formData.contactEmail}
+                onChangeText={(val) => updateFormData('contactEmail', val)}
+                keyboardType="email-address"
+                error={errors.contactEmail}
+                required
+              />
+              <FormInput
+                label="Contact Phone"
+                value={formData.contactPhone}
+                onChangeText={(val) => updateFormData('contactPhone', val)}
+                keyboardType="phone-pad"
+              />
             </FormSection>
 
             {/* Team Members */}
             <FormSection title="Team Members" icon="people-outline">
-              {/* ...existing code... */}
+              {teamMembers.map((member, index) => (
+                <View key={index} style={styles.memberContainer}>
+                  <View style={styles.memberHeader}>
+                    <Text style={styles.memberTitle}>Member {index + 1}</Text>
+                    {teamMembers.length > 1 && (
+                      <TouchableOpacity onPress={() => removeTeamMember(index)}>
+                        <Ionicons name="trash-outline" size={20} color="#f44336" />
+                      </TouchableOpacity>
+                    )}
+                  </View>
+                  <FormInput
+                    label="Name"
+                    value={member.name}
+                    onChangeText={(val) => updateTeamMember(index, 'name', val)}
+                  />
+                  <FormInput
+                    label="Role"
+                    value={member.role}
+                    onChangeText={(val) => updateTeamMember(index, 'role', val)}
+                  />
+                  <FormInput
+                    label="Expertise"
+                    value={member.expertise}
+                    onChangeText={(val) => updateTeamMember(index, 'expertise', val)}
+                  />
+                </View>
+              ))}
+              <Button mode="outlined" onPress={addTeamMember} style={styles.addButton} textColor="#b366ff">
+                + Add Team Member
+              </Button>
             </FormSection>
 
             {/* Funding Requirements */}
             <FormSection title="Funding Requirements (Optional)" icon="cash-outline">
-              {/* ...existing code... */}
+              <FormInput
+                label="Funding Requested (₹)"
+                value={formData.fundingRequested}
+                onChangeText={(val) => updateFormData('fundingRequested', val)}
+                keyboardType="numeric"
+                error={errors.fundingRequested}
+              />
+              <FormInput
+                label="Funding Purpose"
+                placeholder="How will the funds be used?"
+                value={formData.fundingPurpose}
+                onChangeText={(val) => updateFormData('fundingPurpose', val)}
+                multiline
+                numberOfLines={3}
+              />
             </FormSection>
 
             {/* Implementation Details */}
             <FormSection title="Implementation Details" icon="construct-outline">
-              {/* ...existing code... */}
+              <DropdownPicker
+                label="Current Stage"
+                value={formData.currentStage}
+                onValueChange={(val) => updateFormData('currentStage', val)}
+                items={DEVELOPMENT_STAGES}
+              />
+              <FormInput
+                label="Timeline/Roadmap"
+                placeholder="Expected milestones and timeline"
+                value={formData.timeline}
+                onChangeText={(val) => updateFormData('timeline', val)}
+                multiline
+                numberOfLines={3}
+              />
+              <FormInput
+                label="Required Resources"
+                placeholder="What resources do you need?"
+                value={formData.resources}
+                onChangeText={(val) => updateFormData('resources', val)}
+                multiline
+                numberOfLines={2}
+              />
+              <FormInput
+                label="Potential Risks"
+                placeholder="What are the risks and your mitigation plan?"
+                value={formData.risks}
+                onChangeText={(val) => updateFormData('risks', val)}
+                multiline
+                numberOfLines={3}
+              />
             </FormSection>
 
             {/* Links */}
             <FormSection title="Relevant Links (Optional)" icon="link-outline">
-              {/* ...existing code... */}
+              {links.map((link, index) => (
+                <View key={index} style={styles.linkContainer}>
+                  <View style={styles.linkHeader}>
+                    <Text style={styles.linkTitle}>Link {index + 1}</Text>
+                    {links.length > 1 && (
+                      <TouchableOpacity onPress={() => removeLink(index)}>
+                        <Ionicons name="trash-outline" size={20} color="#f44336" />
+                      </TouchableOpacity>
+                    )}
+                  </View>
+                  <FormInput
+                    label="Title"
+                    placeholder="e.g., Pitch Deck, Demo Video"
+                    value={link.title}
+                    onChangeText={(val) => updateLink(index, 'title', val)}
+                  />
+                  <FormInput
+                    label="URL"
+                    placeholder="https://"
+                    value={link.url}
+                    onChangeText={(val) => updateLink(index, 'url', val)}
+                    keyboardType="url"
+                  />
+                </View>
+              ))}
+              <Button mode="outlined" onPress={addLink} style={styles.addButton} textColor="#b366ff">
+                + Add Link
+              </Button>
             </FormSection>
 
             {/* Documents */}
             <FormSection title="Supporting Documents" icon="folder-outline">
-              {/* ...existing code... */}
+              <FileUpload
+                label="Upload Documents"
+                files={formData.documents}
+                onFileSelect={(files) => updateFormData('documents', files)}
+                multiple
+              />
+              <Text style={styles.helpText}>
+                Supported formats: PDF, DOCX, PPTX (Max 10MB per file)
+              </Text>
             </FormSection>
 
             {/* Privacy Settings */}
             <FormSection title="Privacy Settings" icon="shield-outline">
-              {/* ...existing code... */}
+              <View style={styles.switchContainer}>
+                <View style={styles.switchInfo}>
+                  <Text style={styles.switchLabel}>Public Innovation Idea</Text>
+                  <Text style={styles.switchDescription}>
+                    Allow other users to view your idea and request collaboration
+                  </Text>
+                </View>
+                <TouchableOpacity 
+                  onPress={() => updateFormData('isPublic', !formData.isPublic)}
+                  style={{
+                    width: 44,
+                    height: 24,
+                    borderRadius: 12,
+                    backgroundColor: formData.isPublic ? '#b366ff' : 'rgba(255,255,255,0.1)',
+                    justifyContent: 'center',
+                    padding: 2
+                  }}
+                >
+                  <View style={{
+                    width: 20,
+                    height: 20,
+                    borderRadius: 10,
+                    backgroundColor: '#fff',
+                    alignSelf: formData.isPublic ? 'flex-end' : 'flex-start'
+                  }} />
+                </TouchableOpacity>
+              </View>
             </FormSection>
 
             {/* Action Buttons */}
@@ -346,71 +599,101 @@ export default function AddInnovationScreen({ route, navigation }) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f5f5f5',
+    backgroundColor: '#1a1a3e',
   },
   header: {
-    paddingTop: 40,
+    paddingTop: 50,
     paddingBottom: 20,
     paddingHorizontal: 20,
+  },
+  headerTop: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  backButton: {
+    padding: 8,
+    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    borderRadius: 12,
+  },
+  headerTitleContainer: {
+    flex: 1,
     alignItems: 'center',
   },
   headerTitle: {
-    fontSize: 20,
+    fontSize: 22,
     fontWeight: 'bold',
     color: '#fff',
+  },
+  headerRight: {
+    width: 40,
   },
   content: {
     flex: 1,
     padding: 20,
   },
+  sectionCard: {
+    backgroundColor: 'transparent',
+    marginBottom: 40,
+  },
   memberContainer: {
-    backgroundColor: '#f8f9fa',
-    borderRadius: 8,
-    padding: 12,
-    marginBottom: 12,
+    backgroundColor: 'rgba(255, 255, 255, 0.05)',
+    borderRadius: 12,
+    padding: 16,
+    marginBottom: 16,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.1)',
   },
   memberHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 8,
+    marginBottom: 12,
   },
   memberTitle: {
-    fontSize: 14,
+    fontSize: 16,
     fontWeight: 'bold',
-    color: '#333',
+    color: '#fff',
   },
   linkContainer: {
-    backgroundColor: '#f8f9fa',
-    borderRadius: 8,
-    padding: 12,
-    marginBottom: 12,
+    backgroundColor: 'rgba(255, 255, 255, 0.05)',
+    borderRadius: 12,
+    padding: 16,
+    marginBottom: 16,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.1)',
   },
   linkHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 8,
+    marginBottom: 12,
   },
   linkTitle: {
-    fontSize: 14,
+    fontSize: 16,
     fontWeight: 'bold',
-    color: '#333',
+    color: '#fff',
   },
   addButton: {
     marginTop: 8,
-    borderColor: '#9C27B0',
+    borderColor: '#b366ff',
   },
   helpText: {
-    fontSize: 12,
-    color: '#666',
+    fontSize: 13,
+    color: '#a0a0b0',
     marginTop: 8,
-    lineHeight: 16,
+    lineHeight: 18,
   },
   switchContainer: {
     flexDirection: 'row',
     alignItems: 'center',
     paddingVertical: 12,
+    backgroundColor: 'rgba(255, 255, 255, 0.05)',
+    padding: 16,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.1)',
+    marginBottom: 16,
   },
   switchInfo: {
     flex: 1,
@@ -418,11 +701,11 @@ const styles = StyleSheet.create({
   switchLabel: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#333',
+    color: '#fff',
     marginBottom: 4,
   },
   switchDescription: {
     fontSize: 14,
-    color: '#666',
+    color: '#a0a0b0',
   },
 });

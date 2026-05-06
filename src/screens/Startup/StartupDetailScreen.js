@@ -1001,7 +1001,9 @@ import {
   ScrollView,
   TouchableOpacity,
   Alert,
-  Linking
+  Linking,
+  ActivityIndicator,
+  Platform
 } from 'react-native';
 import { Avatar, Button, Chip } from 'react-native-paper';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -1013,10 +1015,15 @@ import { StatusBadge, LoadingSpinner } from '../../components/UIComponents';
 
 export default function StartupDetailScreen({ route, navigation }) {
   const { startupId } = route.params;
-  const { userProfile, hasPermission } = useAuth();
+  const { currentUser, userProfile, hasPermission } = useAuth();
 
   const [startup, setStartup] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [actionLoading, setActionLoading] = useState(false);
+  const [hasRequestedInvestment, setHasRequestedInvestment] = useState(false);
+  const [hasRequestedConnection, setHasRequestedConnection] = useState(false);
+  const [investmentRequests, setInvestmentRequests] = useState([]);
+  const [connectionRequests, setConnectionRequests] = useState([]);
   const [founders, setFounders] = useState([]);
   const [timeline, setTimeline] = useState([]);
   const [fundingRounds, setFundingRounds] = useState([]);
@@ -1047,6 +1054,53 @@ export default function StartupDetailScreen({ route, navigation }) {
     loadFounders(startupData);
     loadTimeline(startupData);
     loadFundingHistory(startupData);
+    checkExistingRequests(startupData.id);
+    
+    // If the user is the owner, load the requests they've received
+    if (currentUser?.uid === startupData.userId) {
+      loadReceivedRequests(startupData.id);
+    }
+  };
+
+  const loadReceivedRequests = async (id) => {
+    try {
+      // Load investment requests
+      const invQ = query(collection(db, 'investment_requests'), where('startupId', '==', id));
+      const invSnap = await getDocs(invQ);
+      setInvestmentRequests(invSnap.docs.map(d => ({ id: d.id, ...d.data() })));
+
+      // Load connection requests
+      const connQ = query(collection(db, 'connection_requests'), where('startupId', '==', id));
+      const connSnap = await getDocs(connQ);
+      setConnectionRequests(connSnap.docs.map(d => ({ id: d.id, ...d.data() })));
+    } catch (error) {
+      console.error('Error loading received requests:', error);
+    }
+  };
+
+  const checkExistingRequests = async (id) => {
+    if (!currentUser) return;
+    try {
+      // Check investment requests
+      const invQ = query(
+        collection(db, 'investment_requests'),
+        where('startupId', '==', id),
+        where('investorId', '==', currentUser.uid)
+      );
+      const invSnap = await getDocs(invQ);
+      setHasRequestedInvestment(!invSnap.empty);
+
+      // Check connection requests
+      const connQ = query(
+        collection(db, 'connection_requests'),
+        where('startupId', '==', id),
+        where('requesterId', '==', currentUser.uid)
+      );
+      const connSnap = await getDocs(connQ);
+      setHasRequestedConnection(!connSnap.empty);
+    } catch (error) {
+      console.error('Error checking existing requests:', error);
+    }
   };
 
   const loadFounders = async (startupData) => {
@@ -1074,8 +1128,61 @@ export default function StartupDetailScreen({ route, navigation }) {
     setFundingRounds(items);
   };
 
+  // INVESTOR ACTIONS
+  const requestInvestment = async () => {
+    if (actionLoading || !currentUser) return;
+    try {
+      setActionLoading(true);
+      await addDoc(collection(db, 'investment_requests'), {
+        startupId: startup.id,
+        startupName: startup.name,
+        investorId: currentUser.uid,
+        investorName: userProfile?.name || currentUser.email || 'Anonymous Investor',
+        ownerId: startup.userId,
+        status: 'pending',
+        message: `I am interested in investing in ${startup.name}. I would like to discuss potential investment opportunities.`,
+        createdAt: new Date().toISOString()
+      });
+      setHasRequestedInvestment(true);
+      Alert.alert('Success', 'Investment interest sent to founder!');
+    } catch (error) {
+      console.error('Error sending investment request:', error);
+      Alert.alert('Error', 'Failed to send request. Check your permissions.');
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  const requestConnection = async () => {
+    if (actionLoading || !currentUser) return;
+    try {
+      setActionLoading(true);
+      await addDoc(collection(db, 'connection_requests'), {
+        startupId: startup.id,
+        startupName: startup.name,
+        requesterId: currentUser.uid,
+        requesterName: userProfile?.name || currentUser.email || 'Anonymous User',
+        requesterType: userProfile?.role || 'user',
+        ownerId: startup.userId,
+        status: 'pending',
+        message: `I would like to connect with ${startup.name} for potential collaboration opportunities.`,
+        createdAt: new Date().toISOString()
+      });
+      setHasRequestedConnection(true);
+      Alert.alert('Success', 'Connection request sent!');
+    } catch (error) {
+      console.error('Error sending connection request:', error);
+      Alert.alert('Error', 'Failed to send connection request.');
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
   // OPEN LINKS
   const openURL = (url) => Linking.openURL(url);
+
+  const isOwner = currentUser?.uid === startup?.userId || userProfile?.uid === startup?.userId;
+  const isInvestor = userProfile?.role === 'investor';
 
   if (loading) return <LoadingSpinner message="Loading Startup..." />;
 
@@ -1090,19 +1197,14 @@ export default function StartupDetailScreen({ route, navigation }) {
         <Text style={styles.headerTitle}>{startup.name}</Text>
 
         <View style={styles.headerBadges}>
-          <StatusBadge status={startup.stage} type="startup" />
-
-          {startup.fundingStage && (
+          <StatusBadge status={startup.stage} type="startup" />{startup.fundingStage && (
             <StatusBadge status={startup.fundingStage} />
-          )}
-
-          {startup.isVerified && (
+          )}{startup.isVerified && (
             <View style={styles.verifiedBadge}>
               <Ionicons name="checkmark-circle" size={16} color="#fff" />
               <Text style={styles.verifiedText}>Verified</Text>
             </View>
-          )}
-        </View>
+          )}</View>
       </View>
 
       <ScrollView showsVerticalScrollIndicator={false} style={styles.content}>
@@ -1118,36 +1220,27 @@ export default function StartupDetailScreen({ route, navigation }) {
             <Meta
               icon="calendar-outline"
               text={`Founded: ${new Date(startup.foundingDate).toLocaleDateString()}`}
-            />
-
-            {startup.website && (
+            />{startup.website && (
               <TouchableOpacity onPress={() => openURL(startup.website)}>
                 <Meta icon="globe-outline" text={startup.website} link />
               </TouchableOpacity>
-            )}
-          </View>
+            )}</View>
         </GlassCard>
 
         {/* METRICS GRID */}
         <GlassCard title="Key Metrics">
           <View style={styles.metricsGrid}>
-            {metric(startup.employeeCount, "people-outline", "Employees")}
-            {metric(startup.totalFunding, "cash-outline", "Total Funding")}
-            {metric(startup.valuation, "diamond-outline", "Valuation")}
-            {metric(startup.currentRevenue, "trending-up-outline", "Revenue")}
-          </View>
+            {metric(startup.employeeCount, "people-outline", "Employees")}{metric(startup.totalFunding, "cash-outline", "Total Funding")}{metric(startup.valuation, "diamond-outline", "Valuation")}{metric(startup.currentRevenue, "trending-up-outline", "Revenue")}</View>
         </GlassCard>
 
         {/* TAGS */}
         {startup.tags?.length > 0 && (
           <GlassCard title="Technologies / Tags">
-            <View style={styles.tagsContainer}>
-              {startup.tags.map((tag, i) => (
+            <View style={styles.tagsContainer}>{startup.tags.map((tag, i) => (
                 <Chip key={i} style={styles.tag} textStyle={{ color: "#fff" }}>
                   {tag}
                 </Chip>
-              ))}
-            </View>
+              ))}</View>
           </GlassCard>
         )}
 
@@ -1192,6 +1285,47 @@ export default function StartupDetailScreen({ route, navigation }) {
           </GlassCard>
         )}
 
+        {/* MANAGEMENT SECTION (OWNER ONLY) */}
+        {isOwner && (
+          <GlassCard title="Management: Requests">
+            {investmentRequests.length === 0 && connectionRequests.length === 0 ? (
+              <Text style={styles.noRequestsText}>No requests received yet.</Text>
+            ) : (
+              <>
+                {investmentRequests.length > 0 && (
+                  <View style={styles.requestSubSection}>
+                    <Text style={styles.requestSubTitle}>Investment Interests ({investmentRequests.length})</Text>
+                    {investmentRequests.map((req) => (
+                      <View key={req.id} style={styles.requestItem}>
+                        <Ionicons name="cash-outline" size={18} color="#4CAF50" />
+                        <View style={styles.requestContent}>
+                          <Text style={styles.requestUser}>{req.investorName}</Text>
+                          <Text style={styles.requestMsg} numberOfLines={2}>{req.message}</Text>
+                        </View>
+                      </View>
+                    ))}
+                  </View>
+                )}
+                
+                {connectionRequests.length > 0 && (
+                  <View style={styles.requestSubSection}>
+                    <Text style={styles.requestSubTitle}>Connection Requests ({connectionRequests.length})</Text>
+                    {connectionRequests.map((req) => (
+                      <View key={req.id} style={styles.requestItem}>
+                        <Ionicons name="people-outline" size={18} color="#2196F3" />
+                        <View style={styles.requestContent}>
+                          <Text style={styles.requestUser}>{req.requesterName} ({req.requesterType})</Text>
+                          <Text style={styles.requestMsg} numberOfLines={2}>{req.message}</Text>
+                        </View>
+                      </View>
+                    ))}
+                  </View>
+                )}
+              </>
+            )}
+          </GlassCard>
+        )}
+
         {/* TIMELINE */}
         {timeline.length > 0 && (
           <GlassCard title="Activity Timeline">
@@ -1209,26 +1343,39 @@ export default function StartupDetailScreen({ route, navigation }) {
           </GlassCard>
         )}
 
-        {/* ACTION BUTTONS */}
         <View style={styles.actions}>
-
-          <GradientButton
-            label="Edit Startup"
-            icon="pencil"
-            onPress={() =>
-              navigation.navigate("RegisterStartup", {
-                startupId,
-                editMode: true
-              })
-            }
-          />
-
-          <GradientButton
-            label="Connect & Collaborate"
-            icon="people"
-            outlined
-            onPress={() => Alert.alert("Request sent!")}
-          />
+          {isOwner && (
+            <GradientButton
+              label="Edit Profile"
+              icon="pencil"
+              onPress={() =>
+                navigation.navigate("RegisterStartup", {
+                  startupId,
+                  editMode: true
+                })
+              }
+              loading={actionLoading}
+            />
+          )}
+          {isInvestor && (
+            <GradientButton
+              label={hasRequestedInvestment ? "Interest Expressed" : "Express Investment Interest"}
+              icon={hasRequestedInvestment ? "checkmark-done-outline" : "cash-outline"}
+              onPress={requestInvestment}
+              loading={actionLoading}
+              disabled={hasRequestedInvestment}
+            />
+          )}
+          {!isOwner && (
+            <GradientButton
+              label={hasRequestedConnection ? "Connection Requested" : "Connect & Collaborate"}
+              icon={hasRequestedConnection ? "checkmark-done-outline" : "people-outline"}
+              outlined
+              onPress={requestConnection}
+              loading={actionLoading}
+              disabled={hasRequestedConnection}
+            />
+          )}
         </View>
 
       </ScrollView>
@@ -1262,26 +1409,48 @@ const SubSection = ({ title, content }) =>
     </View>
   ) : null;
 
-const GradientButton = ({ label, icon, outlined, onPress }) => (
-  <>
-    {outlined ? (
-      <TouchableOpacity onPress={onPress} style={styles.outlinedBtn}>
-        <Ionicons name={icon} size={18} color="#b366ff" />
-        <Text style={styles.outlinedText}>{label}</Text>
+const GradientButton = ({ label, icon, outlined, onPress, loading, disabled }) => {
+  const isDisabled = loading || disabled;
+  if (outlined) {
+    return (
+      <TouchableOpacity 
+        onPress={onPress} 
+        style={[styles.outlinedBtn, isDisabled && { opacity: 0.6 }]} 
+        disabled={isDisabled}
+      >
+        {loading ? (
+          <ActivityIndicator size="small" color="#b366ff" />
+        ) : (
+          <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+            <Ionicons name={icon} size={18} color="#b366ff" />
+            <Text style={styles.outlinedText}>{label}</Text>
+          </View>
+        )}
       </TouchableOpacity>
-    ) : (
-      <TouchableOpacity onPress={onPress} style={styles.gradientBtn}>
-        <LinearGradient
-          colors={["#b366ff", "#8b3dc7", "#6a2c96"]}
-          style={styles.gradientInner}
-        >
-          <Ionicons name={icon} size={18} color="#fff" />
-          <Text style={styles.gradientText}>{label}</Text>
-        </LinearGradient>
-      </TouchableOpacity>
-    )}
-  </>
-);
+    );
+  }
+  return (
+    <TouchableOpacity 
+      onPress={onPress} 
+      style={[styles.gradientBtn, isDisabled && { opacity: 0.8 }]} 
+      disabled={isDisabled}
+    >
+      <LinearGradient
+        colors={isDisabled ? ["#555", "#444", "#333"] : ["#b366ff", "#8b3dc7", "#6a2c96"]}
+        style={styles.gradientInner}
+      >
+        {loading ? (
+          <ActivityIndicator size="small" color="#fff" />
+        ) : (
+          <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+            <Ionicons name={icon} size={18} color="#fff" />
+            <Text style={styles.gradientText}>{label}</Text>
+          </View>
+        )}
+      </LinearGradient>
+    </TouchableOpacity>
+  );
+};
 
 /* ---------------------------------------------------
    DASHBOARD STYLE SHEET
@@ -1478,6 +1647,46 @@ const styles = StyleSheet.create({
     marginBottom: 3,
     borderBottomWidth: 1,
     borderColor: "rgba(255,255,255,0.07)",
+  },
+
+  /* REQUESTS MANAGEMENT */
+  requestSubSection: {
+    marginBottom: 15,
+  },
+  requestSubTitle: {
+    color: "#b366ff",
+    fontSize: 14,
+    fontWeight: "700",
+    marginBottom: 8,
+  },
+  requestItem: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "rgba(255,255,255,0.05)",
+    padding: 10,
+    borderRadius: 10,
+    marginBottom: 8,
+  },
+  requestContent: {
+    marginLeft: 10,
+    flex: 1,
+  },
+  requestUser: {
+    color: "#fff",
+    fontSize: 14,
+    fontWeight: "600",
+  },
+  requestMsg: {
+    color: "#aaa",
+    fontSize: 12,
+    marginTop: 2,
+  },
+  noRequestsText: {
+    color: "#888",
+    fontSize: 14,
+    fontStyle: "italic",
+    textAlign: "center",
+    paddingVertical: 10,
   },
 
   fundingAmount: {

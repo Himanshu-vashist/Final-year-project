@@ -95,7 +95,9 @@ export default function StartupListScreen({ navigation }) {
       );
 
       // Add role-based filtering
-      if (!hasPermission('view_all_data')) {
+      // If user doesn't have view_all_data AND doesn't have view_startups (like Entrepreneur), 
+      // they only see their own startups.
+      if (!hasPermission('view_all_data') && !hasPermission('view_startups')) {
         q = query(
           collection(db, 'startups'),
           where('userId', '==', userProfile.uid),
@@ -196,7 +198,7 @@ export default function StartupListScreen({ navigation }) {
   };
 
   const canAddStartup = () => {
-    return hasPermission('register_startup') || hasPermission('manage_startups');
+    return hasPermission('submit_startup') || hasPermission('manage_startups');
   };
 
   const canViewDetails = (startup) => {

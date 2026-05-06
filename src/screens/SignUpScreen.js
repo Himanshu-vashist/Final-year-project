@@ -17,6 +17,7 @@ import { TextInput } from 'react-native-paper';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuth, USER_ROLES } from '../context/AuthContext';
+import { useTheme } from '../context/ThemeContext';
 
 const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
 
@@ -29,6 +30,7 @@ const ROLE_OPTIONS = [
 ];
 
 export default function SignUpScreen({ navigation }) {
+  const { theme } = useTheme();
   const scrollViewRef = useRef(null);
 
   const [formData, setFormData] = useState({
@@ -124,9 +126,7 @@ export default function SignUpScreen({ navigation }) {
       <StatusBar barStyle="light-content" />
 
       <LinearGradient
-        colors={['#1a1a3e', '#2d2d5f', '#1a1a3e']}
-        start={{ x: 0, y: 0 }}
-        end={{ x: 1, y: 1 }}
+        colors={theme.gradients.dark}
         style={styles.gradient}
       >
         <ScrollView
@@ -435,6 +435,6 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     marginTop: 20
   },
-  linkText: { color: '#999', fontSize: 14 },
+  linkText: { color: 'rgba(255,255,255,0.6)', fontSize: 14 },
   linkTextBold: { color: '#b366ff', fontSize: 14, fontWeight: 'bold' }
 });

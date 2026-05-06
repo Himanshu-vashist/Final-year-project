@@ -1,5 +1,10 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { 
+  Provider as PaperProvider, 
+  MD3LightTheme, 
+  MD3DarkTheme 
+} from 'react-native-paper';
 
 const ThemeContext = createContext();
 
@@ -14,27 +19,30 @@ export const useTheme = () => {
 export const lightTheme = {
   mode: 'light',
   colors: {
-    primary: '#667eea',
-    secondary: '#764ba2',
-    background: '#f5f7fa',
-    surface: '#ffffff',
-    card: '#ffffff',
-    text: '#2d3748',
-    textSecondary: '#718096',
-    border: '#e2e8f0',
-    error: '#f56565',
-    success: '#48bb78',
-    warning: '#ed8936',
-    info: '#4299e1',
-    accent: '#667eea',
-    placeholder: '#a0aec0',
-    disabled: '#cbd5e0',
-    backdrop: 'rgba(0, 0, 0, 0.3)',
+    primary: '#6366f1',
+    secondary: '#8b5cf6',
+    background: '#0f172a',
+    surface: '#1e293b',
+    card: '#1e293b',
+    text: '#f8fafc',
+    textSecondary: '#94a3b8',
+    border: '#334155',
+    error: '#ef4444',
+    success: '#10b981',
+    warning: '#f59e0b',
+    info: '#3b82f6',
+    accent: '#f43f5e',
+    placeholder: '#94a3b8',
+    disabled: '#cbd5e1',
+    backdrop: 'rgba(0, 0, 0, 0.4)',
+    glass: 'rgba(255, 255, 255, 0.1)',
   },
   gradients: {
-    primary: ['#667eea', '#764ba2'],
-    secondary: ['#4299e1', '#667eea'],
-    dark: ['#2d3748', '#4a5568'],
+    primary: ['#6366f1', '#8b5cf6'],
+    secondary: ['#3b82f6', '#2dd4bf'],
+    dark: ['#1e293b', '#334155'],
+    accent: ['#f43f5e', '#fb7185'],
+    success: ['#10b981', '#34d399'],
   },
   spacing: {
     xs: 4,
@@ -47,13 +55,13 @@ export const lightTheme = {
     xl: 32,
   },
   borderRadius: {
-    small: 4,
-    sm: 4,
-    medium: 8,
-    md: 8,
-    large: 12,
-    lg: 12,
-    xl: 16,
+    small: 6,
+    sm: 6,
+    medium: 12,
+    md: 12,
+    large: 20,
+    lg: 20,
+    xl: 28,
   },
   fonts: {
     regular: {
@@ -74,27 +82,30 @@ export const lightTheme = {
 export const darkTheme = {
   mode: 'dark',
   colors: {
-    primary: '#4299e1',
-    secondary: '#3182ce',
-    background: '#0f1419',
-    surface: '#1a202c',
-    card: '#2d3748',
-    text: '#e2e8f0',
-    textSecondary: '#a0aec0',
-    border: '#2d3748',
-    error: '#fc8181',
-    success: '#68d391',
-    warning: '#f6ad55',
-    info: '#63b3ed',
-    accent: '#4299e1',
-    placeholder: '#4a5568',
-    disabled: '#2d3748',
-    backdrop: 'rgba(0, 0, 0, 0.7)',
+    primary: '#818cf8',
+    secondary: '#a78bfa',
+    background: '#0f172a',
+    surface: '#1e293b',
+    card: '#334155',
+    text: '#f8fafc',
+    textSecondary: '#94a3b8',
+    border: '#334155',
+    error: '#f87171',
+    success: '#34d399',
+    warning: '#fbbf24',
+    info: '#60a5fa',
+    accent: '#fb7185',
+    placeholder: '#475569',
+    disabled: '#1e293b',
+    backdrop: 'rgba(0, 0, 0, 0.8)',
+    glass: 'rgba(30, 41, 59, 0.7)',
   },
   gradients: {
-    primary: ['#1a365d', '#2c5282', '#2b6cb0'],
-    secondary: ['#1e3a8a', '#2563eb'],
-    dark: ['#0f1419', '#1a202c', '#2d3748'],
+    primary: ['#1e1b4b', '#312e81', '#4338ca'],
+    secondary: ['#1e3a8a', '#1d4ed8', '#2563eb'],
+    dark: ['#0f172a', '#1e293b', '#334155'],
+    accent: ['#881337', '#be123c', '#e11d48'],
+    surface: ['#1e293b', '#0f172a'],
   },
   spacing: {
     xs: 4,
@@ -107,13 +118,13 @@ export const darkTheme = {
     xl: 32,
   },
   borderRadius: {
-    small: 4,
-    sm: 4,
-    medium: 8,
-    md: 8,
-    large: 12,
-    lg: 12,
-    xl: 16,
+    small: 6,
+    sm: 6,
+    medium: 12,
+    md: 12,
+    large: 20,
+    lg: 20,
+    xl: 28,
   },
   fonts: {
     regular: {
@@ -132,7 +143,7 @@ export const darkTheme = {
 };
 
 export const ThemeProvider = ({ children }) => {
-  const [isDarkMode, setIsDarkMode] = useState(false);
+  const [isDarkMode, setIsDarkMode] = useState(true);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
@@ -164,9 +175,35 @@ export const ThemeProvider = ({ children }) => {
 
   const theme = isDarkMode ? darkTheme : lightTheme;
 
+  const paperTheme = isDarkMode
+    ? {
+        ...MD3DarkTheme,
+        colors: {
+          ...MD3DarkTheme.colors,
+          primary: theme.colors.primary,
+          secondary: theme.colors.secondary,
+          background: theme.colors.background,
+          surface: theme.colors.surface,
+          error: theme.colors.error,
+        },
+      }
+    : {
+        ...MD3LightTheme,
+        colors: {
+          ...MD3LightTheme.colors,
+          primary: theme.colors.primary,
+          secondary: theme.colors.secondary,
+          background: theme.colors.background,
+          surface: theme.colors.surface,
+          error: theme.colors.error,
+        },
+      };
+
   return (
     <ThemeContext.Provider value={{ theme, isDarkMode, toggleTheme, isLoading }}>
-      {children}
+      <PaperProvider theme={paperTheme}>
+        {children}
+      </PaperProvider>
     </ThemeContext.Provider>
   );
 };

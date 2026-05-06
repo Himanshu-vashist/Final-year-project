@@ -6,11 +6,11 @@ import DateTimePickerModal from 'react-native-modal-datetime-picker';
 import RNPickerSelect from 'react-native-picker-select';
 import moment from 'moment';
 
-export const FormSection = ({ title, children, icon }) => (
-  <Surface style={styles.formSection}>
+export const FormSection = ({ title, children, icon, dark = true }) => (
+  <Surface style={[styles.formSection, dark && styles.formSectionDark]}>
     <View style={styles.sectionHeader}>
-      {icon && <Ionicons name={icon} size={20} color="#667eea" />}
-      <Text style={styles.sectionTitle}>{title}</Text>
+      {icon && <Ionicons name={icon} size={20} color={dark ? "#b366ff" : "#667eea"} />}
+      <Text style={[styles.sectionTitle, dark && styles.sectionTitleDark]}>{title}</Text>
     </View>
     <View style={styles.sectionContent}>
       {children}
@@ -30,6 +30,7 @@ export const FormInput = ({
   placeholder,
   required = false,
   error,
+  dark = true,
   ...props 
 }) => (
   <View style={styles.inputContainer}>
@@ -38,14 +39,23 @@ export const FormInput = ({
       value={value}
       onChangeText={onChangeText}
       mode="outlined"
-      style={styles.input}
+      style={[styles.input, dark && styles.inputDark]}
       multiline={multiline}
       numberOfLines={numberOfLines}
       keyboardType={keyboardType}
       placeholder={placeholder}
-      left={leftIcon && <TextInput.Icon icon={leftIcon} />}
-      right={rightIcon && <TextInput.Icon icon={rightIcon} />}
-      theme={{ colors: { primary: '#667eea' } }}
+      placeholderTextColor={dark ? "#666" : "#999"}
+      left={leftIcon && <TextInput.Icon icon={leftIcon} color={dark ? "#b366ff" : "#667eea"} />}
+      right={rightIcon && <TextInput.Icon icon={rightIcon} color={dark ? "#b366ff" : "#667eea"} />}
+      outlineColor={dark ? "rgba(255,255,255,0.1)" : "#ccc"}
+      activeOutlineColor={dark ? "#b366ff" : "#667eea"}
+      textColor={dark ? "#fff" : "#333"}
+      theme={{ 
+        colors: { 
+          primary: dark ? '#b366ff' : '#667eea',
+          onSurfaceVariant: dark ? '#aaa' : '#666',
+        } 
+      }}
       error={!!error}
       {...props}
     />
@@ -59,7 +69,8 @@ export const DatePicker = ({
   onDateChange, 
   mode = 'date',
   required = false,
-  error 
+  error,
+  dark = true 
 }) => {
   const [isDatePickerVisible, setDatePickerVisibility] = useState(false);
 
@@ -85,10 +96,18 @@ export const DatePicker = ({
           label={`${label}${required ? ' *' : ''}`}
           value={formatDate(value)}
           mode="outlined"
-          style={styles.input}
+          style={[styles.input, dark && styles.inputDark]}
           editable={false}
-          right={<TextInput.Icon icon="calendar" />}
-          theme={{ colors: { primary: '#667eea' } }}
+          textColor={dark ? "#fff" : "#333"}
+          right={<TextInput.Icon icon="calendar" color={dark ? "#b366ff" : "#667eea"} />}
+          outlineColor={dark ? "rgba(255,255,255,0.1)" : "#ccc"}
+          activeOutlineColor={dark ? "#b366ff" : "#667eea"}
+          theme={{ 
+            colors: { 
+              primary: dark ? '#b366ff' : '#667eea',
+              onSurfaceVariant: dark ? '#aaa' : '#666',
+            } 
+          }}
           error={!!error}
         />
       </TouchableOpacity>
@@ -100,6 +119,7 @@ export const DatePicker = ({
         onConfirm={handleConfirm}
         onCancel={hideDatePicker}
         date={value || new Date()}
+        isDarkModeEnabled={dark}
       />
     </View>
   );
@@ -112,24 +132,29 @@ export const DropdownPicker = ({
   items, 
   placeholder = 'Select an option...',
   required = false,
-  error 
+  error,
+  dark = true 
 }) => (
   <View style={styles.inputContainer}>
-    <Text style={styles.dropdownLabel}>
+    <Text style={[styles.dropdownLabel, dark && styles.dropdownLabelDark]}>
       {label}{required ? ' *' : ''}
     </Text>
-    <View style={[styles.dropdownContainer, error && styles.dropdownError]}>
+    <View style={[
+      styles.dropdownContainer, 
+      dark && styles.dropdownContainerDark,
+      error && styles.dropdownError
+    ]}>
       <RNPickerSelect
         onValueChange={onValueChange}
         items={items}
         value={value}
-        placeholder={{ label: placeholder, value: null }}
+        placeholder={{ label: placeholder, value: null, color: dark ? '#666' : '#999' }}
         style={{
-          inputIOS: styles.dropdownInput,
-          inputAndroid: styles.dropdownInput,
-          placeholder: styles.dropdownPlaceholder,
+          inputIOS: [styles.dropdownInput, dark && styles.dropdownInputDark],
+          inputAndroid: [styles.dropdownInput, dark && styles.dropdownInputDark],
+          placeholder: { color: dark ? '#666' : '#999' },
         }}
-        Icon={() => <Ionicons name="chevron-down" size={20} color="#666" />}
+        Icon={() => <Ionicons name="chevron-down" size={20} color={dark ? "#b366ff" : "#666"} />}
       />
     </View>
     {error && <Text style={styles.errorText}>{error}</Text>}
@@ -142,7 +167,8 @@ export const TagInput = ({
   onTagsChange, 
   placeholder = 'Add tags...',
   required = false,
-  error 
+  error,
+  dark = true 
 }) => {
   const [inputValue, setInputValue] = useState('');
 
@@ -168,6 +194,7 @@ export const TagInput = ({
         error={error}
         rightIcon="add"
         onSubmitEditing={addTag}
+        dark={dark}
       />
       {tags.length > 0 && (
         <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.tagsContainer}>
@@ -176,8 +203,8 @@ export const TagInput = ({
               key={index}
               mode="outlined"
               onClose={() => removeTag(tag)}
-              style={styles.tag}
-              textStyle={styles.tagText}
+              style={[styles.tag, dark && styles.tagDark]}
+              textStyle={[styles.tagText, dark && styles.tagTextDark]}
             >
               {tag}
             </Chip>
@@ -195,11 +222,10 @@ export const FileUpload = ({
   multiple = false,
   required = false,
   error,
-  files = []
+  files = [],
+  dark = true 
 }) => {
   const handleFileSelect = async () => {
-    // This would integrate with expo-document-picker
-    // For now, just a placeholder
     console.log('File selection would open here');
     if (onFileSelect) {
       onFileSelect([]);
@@ -208,13 +234,16 @@ export const FileUpload = ({
 
   return (
     <View style={styles.inputContainer}>
-      <Text style={styles.dropdownLabel}>
+      <Text style={[styles.dropdownLabel, dark && styles.dropdownLabelDark]}>
         {label}{required ? ' *' : ''}
       </Text>
       
-      <TouchableOpacity style={styles.fileUploadButton} onPress={handleFileSelect}>
-        <Ionicons name="cloud-upload-outline" size={24} color="#667eea" />
-        <Text style={styles.fileUploadText}>
+      <TouchableOpacity 
+        style={[styles.fileUploadButton, dark && styles.fileUploadButtonDark]} 
+        onPress={handleFileSelect}
+      >
+        <Ionicons name="cloud-upload-outline" size={24} color={dark ? "#b366ff" : "#667eea"} />
+        <Text style={[styles.fileUploadText, dark && styles.fileUploadTextDark]}>
           {files.length > 0 ? `${files.length} file(s) selected` : 'Select files'}
         </Text>
       </TouchableOpacity>
@@ -222,9 +251,9 @@ export const FileUpload = ({
       {files.length > 0 && (
         <View style={styles.fileList}>
           {files.map((file, index) => (
-            <View key={index} style={styles.fileItem}>
-              <Ionicons name="document-outline" size={16} color="#666" />
-              <Text style={styles.fileName}>{file.name}</Text>
+            <View key={index} style={[styles.fileItem, dark && styles.fileItemDark]}>
+              <Ionicons name="document-outline" size={16} color={dark ? "#aaa" : "#666"} />
+              <Text style={[styles.fileName, dark && styles.fileNameDark]}>{file.name}</Text>
               <TouchableOpacity onPress={() => {
                 const newFiles = files.filter((_, i) => i !== index);
                 onFileSelect(newFiles);
@@ -241,15 +270,16 @@ export const FileUpload = ({
   );
 };
 
-export const FormActions = ({ onSave, onCancel, saveText = 'Save', cancelText = 'Cancel', loading = false }) => (
+export const FormActions = ({ onSave, onCancel, saveText = 'Save', cancelText = 'Cancel', loading = false, dark = true }) => (
   <View style={styles.formActions}>
     <Button
       mode="contained"
       onPress={onSave}
       loading={loading}
       disabled={loading}
-      style={styles.saveButton}
+      style={[styles.saveButton, dark && styles.saveButtonDark]}
       contentStyle={styles.buttonContent}
+      textColor="#fff"
     >
       {saveText}
     </Button>
@@ -258,8 +288,9 @@ export const FormActions = ({ onSave, onCancel, saveText = 'Save', cancelText = 
       mode="outlined"
       onPress={onCancel}
       disabled={loading}
-      style={styles.cancelButton}
+      style={[styles.cancelButton, dark && styles.cancelButtonDark]}
       contentStyle={styles.buttonContent}
+      textColor={dark ? "#fff" : "#667eea"}
     >
       {cancelText}
     </Button>
@@ -272,6 +303,10 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     elevation: 2,
     backgroundColor: '#fff',
+  },
+  formSectionDark: {
+    backgroundColor: 'transparent',
+    elevation: 0,
   },
   sectionHeader: {
     flexDirection: 'row',
@@ -286,6 +321,10 @@ const styles = StyleSheet.create({
     color: '#333',
     marginLeft: 8,
   },
+  sectionTitleDark: {
+    color: '#fff',
+    borderBottomColor: 'rgba(255,255,255,0.1)',
+  },
   sectionContent: {
     padding: 16,
   },
@@ -295,6 +334,9 @@ const styles = StyleSheet.create({
   input: {
     backgroundColor: '#fff',
   },
+  inputDark: {
+    backgroundColor: 'rgba(255,255,255,0.02)',
+  },
   errorText: {
     fontSize: 12,
     color: '#f44336',
@@ -302,15 +344,24 @@ const styles = StyleSheet.create({
     marginLeft: 12,
   },
   dropdownLabel: {
-    fontSize: 16,
+    fontSize: 14,
+    fontWeight: '600',
     color: '#333',
     marginBottom: 8,
+    marginLeft: 4,
+  },
+  dropdownLabelDark: {
+    color: '#aaa',
   },
   dropdownContainer: {
     borderWidth: 1,
     borderColor: '#ccc',
-    borderRadius: 4,
+    borderRadius: 8,
     backgroundColor: '#fff',
+  },
+  dropdownContainerDark: {
+    backgroundColor: 'rgba(255,255,255,0.02)',
+    borderColor: 'rgba(255,255,255,0.1)',
   },
   dropdownError: {
     borderColor: '#f44336',
@@ -320,6 +371,9 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     paddingVertical: 12,
     color: '#333',
+  },
+  dropdownInputDark: {
+    color: '#fff',
   },
   dropdownPlaceholder: {
     color: '#999',
@@ -331,18 +385,29 @@ const styles = StyleSheet.create({
     marginRight: 8,
     marginBottom: 4,
   },
+  tagDark: {
+    backgroundColor: 'rgba(179,102,255,0.1)',
+    borderColor: 'rgba(179,102,255,0.3)',
+  },
   tagText: {
     fontSize: 12,
+  },
+  tagTextDark: {
+    color: '#fff',
   },
   fileUploadButton: {
     borderWidth: 2,
     borderColor: '#667eea',
     borderStyle: 'dashed',
-    borderRadius: 8,
+    borderRadius: 12,
     padding: 20,
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: '#f8f9ff',
+  },
+  fileUploadButtonDark: {
+    borderColor: 'rgba(179,102,255,0.3)',
+    backgroundColor: 'rgba(179,102,255,0.05)',
   },
   fileUploadText: {
     marginTop: 8,
@@ -350,22 +415,31 @@ const styles = StyleSheet.create({
     color: '#667eea',
     fontWeight: '500',
   },
+  fileUploadTextDark: {
+    color: '#b366ff',
+  },
   fileList: {
     marginTop: 12,
   },
   fileItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    padding: 8,
+    padding: 10,
     backgroundColor: '#f5f5f5',
-    borderRadius: 4,
-    marginBottom: 4,
+    borderRadius: 8,
+    marginBottom: 6,
+  },
+  fileItemDark: {
+    backgroundColor: 'rgba(255,255,255,0.05)',
   },
   fileName: {
     flex: 1,
     marginLeft: 8,
     fontSize: 14,
     color: '#333',
+  },
+  fileNameDark: {
+    color: '#eee',
   },
   formActions: {
     flexDirection: 'row',
@@ -376,12 +450,20 @@ const styles = StyleSheet.create({
   saveButton: {
     flex: 1,
     backgroundColor: '#667eea',
+    borderRadius: 12,
+  },
+  saveButtonDark: {
+    backgroundColor: '#b366ff',
   },
   cancelButton: {
     flex: 1,
     borderColor: '#667eea',
+    borderRadius: 12,
+  },
+  cancelButtonDark: {
+    borderColor: 'rgba(255,255,255,0.2)',
   },
   buttonContent: {
-    paddingVertical: 8,
+    paddingVertical: 10,
   },
-});
+});

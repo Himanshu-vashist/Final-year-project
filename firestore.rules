@@ -19,7 +19,7 @@ service cloud.firestore {
     }
     
     function isGovernmentUser() {
-      return isRole('government');
+      return isRole('government_official');
     }
     
     function isResearcher() {
@@ -35,7 +35,7 @@ service cloud.firestore {
     }
     
     function isPublicUser() {
-      return isRole('public');
+      return isRole('public_user');
     }
     
     // Users collection - users can read/write their own data
@@ -175,6 +175,52 @@ service cloud.firestore {
       allow update, delete: if isAuthenticated() && (
         isOwner(resource.data.createdBy) || 
         resource.data.participants[request.auth.uid] != null ||
+        isGovernmentUser()
+      );
+    }
+
+    // Investment Requests
+    match /investment_requests/{requestId} {
+      allow read: if isAuthenticated() && (
+        isOwner(resource.data.investorId) || 
+        isOwner(resource.data.ownerId) || 
+        isGovernmentUser()
+      );
+      allow create: if isAuthenticated() && isInvestor();
+      allow update, delete: if isAuthenticated() && (
+        isOwner(resource.data.investorId) || 
+        isGovernmentUser()
+      );
+    }
+    
+    // Startup Timeline
+    match /startup_timeline/{eventId} {
+      allow read: if isAuthenticated();
+      allow write: if isAuthenticated() && (
+        isGovernmentUser() ||
+        isOwner(request.resource.data.userId)
+      );
+    }
+
+    // Funding Rounds
+    match /funding_rounds/{roundId} {
+      allow read: if isAuthenticated();
+      allow write: if isAuthenticated() && (
+        isGovernmentUser() ||
+        isOwner(request.resource.data.userId)
+      );
+    }
+
+    // Connection Requests
+    match /connection_requests/{requestId} {
+      allow read: if isAuthenticated() && (
+        isOwner(resource.data.requesterId) || 
+        isOwner(resource.data.ownerId) ||
+        isGovernmentUser()
+      );
+      allow create: if isAuthenticated();
+      allow update, delete: if isAuthenticated() && (
+        isOwner(resource.data.requesterId) || 
         isGovernmentUser()
       );
     }

@@ -46,6 +46,7 @@ import IPRDetailScreen from '../screens/IPR/IPRDetailScreen';
 import AddIPRScreen from '../screens/IPR/AddIPRScreen';
 import IPRTrackingScreen from '../screens/IPR/IPRTrackingScreen';
 import GovernmentIPRScreen from '../screens/IPR/GovernmentIPRScreen';
+import GovernmentStartupScreen from '../screens/Startup/GovernmentStartupScreen';
 
 // Innovation
 import InnovationListScreen from '../screens/Innovation/InnovationListScreen';
@@ -123,8 +124,10 @@ function GovernmentIPRStack() {
   return (
     <Stack.Navigator screenOptions={{ headerShown: false }}>
       <Stack.Screen name="GovernmentIPRList" component={GovernmentIPRScreen} />
+      <Stack.Screen name="GovernmentStartupList" component={GovernmentStartupScreen} />
       <Stack.Screen name="IPRDetail" component={IPRDetailScreen} />
       <Stack.Screen name="IPRTracking" component={IPRTrackingScreen} />
+      <Stack.Screen name="StartupDetail" component={StartupDetailScreen} />
     </Stack.Navigator>
   );
 }
@@ -205,7 +208,7 @@ function MainTabs() {
       name: 'IPRManagement',
       component: GovernmentIPRStack,
       icon: 'shield-checkmark',
-      label: 'IPR Management',
+      label: 'IPR Review',
     });
   } else if (hasPermission('view_opportunities') || hasPermission('manage_profile') || hasPermission('view_ipr')) {
     // fallback to normal IPR stack if appropriate
@@ -431,6 +434,13 @@ function MainDrawer() {
             </DesktopLayoutWrapper>
           )}
         </Stack.Screen>
+        <Stack.Screen name="IPRManagement">
+          {(props) => (
+            <DesktopLayoutWrapper {...props}>
+              <GovernmentIPRStack {...props} />
+            </DesktopLayoutWrapper>
+          )}
+        </Stack.Screen>
       </Stack.Navigator>
     );
   }
@@ -505,6 +515,16 @@ function MainDrawer() {
           drawerLabel: 'Announcements',
         }}
       />
+      {userProfile?.role === 'government_official' && (
+        <Drawer.Screen
+          name="IPRManagement"
+          component={GovernmentIPRStack}
+          options={{
+            drawerIcon: ({ color }) => <Ionicons name="shield-checkmark" size={22} color={color} />,
+            drawerLabel: 'IPR Review',
+          }}
+        />
+      )}
       <Drawer.Screen
         name="Events"
         component={EventStack}

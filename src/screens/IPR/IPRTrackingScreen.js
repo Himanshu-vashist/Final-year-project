@@ -10,10 +10,10 @@ import { LoadingCard, EmptyState } from '../../components/UIComponents';
 
 export default function IPRTrackingScreen({ route }) {
   const { currentUser, userProfile } = useAuth();
-  const { isDarkMode } = useTheme();
+  const { theme } = useTheme();
   const [application, setApplication] = useState(null);
   const [loading, setLoading] = useState(true);
-  const { applicationId } = route.params;
+  const { applicationId } = route.params || {};
 
   useEffect(() => {
     if (!applicationId) return;
@@ -34,7 +34,7 @@ export default function IPRTrackingScreen({ route }) {
     return (
       <View style={styles.container}>
         <LinearGradient
-          colors={['#1a1a2e', '#16213e', '#0f1419']}
+          colors={theme.gradients.dark}
           style={styles.gradient}
         >
           <LoadingCard />
@@ -47,7 +47,7 @@ export default function IPRTrackingScreen({ route }) {
     return (
       <View style={styles.container}>
         <LinearGradient
-          colors={['#1a1a2e', '#16213e', '#0f1419']}
+          colors={theme.gradients.dark}
           style={styles.gradient}
         >
           <EmptyState
@@ -65,7 +65,7 @@ export default function IPRTrackingScreen({ route }) {
   return (
     <View style={styles.container}>
       <LinearGradient
-        colors={['#1a1a2e', '#16213e', '#0f1419']}
+        colors={theme.gradients.dark}
         style={styles.gradient}
       >
         <IPRTrackingComponent

@@ -96,9 +96,9 @@ export default function Sidebar({ navigation, currentRoute }) {
       {
         name: 'IPR',
         icon: 'shield-checkmark',
-        label: 'IPR',
+        label: userProfile?.role === 'government_official' ? 'IPR Review' : 'IPR',
         route: userProfile?.role === 'government_official' ? 'IPRManagement' : 'IPR',
-        screen: 'IPRList',
+        screen: userProfile?.role === 'government_official' ? 'GovernmentIPRList' : 'IPRList',
         show: hasPermission('view_opportunities') || hasPermission('manage_profile') || userProfile?.role === 'government_official'
       },
       {
@@ -112,10 +112,10 @@ export default function Sidebar({ navigation, currentRoute }) {
       {
         name: 'Startups',
         icon: 'rocket',
-        label: 'Start-ups',
-        route: 'Startups',
-        screen: 'StartupList',
-        show: hasPermission('view_startups') || hasPermission('submit_startup')
+        label: userProfile?.role === 'government_official' ? 'Startup Management' : 'Start-ups',
+        route: userProfile?.role === 'government_official' ? 'IPRManagement' : 'Startups',
+        screen: userProfile?.role === 'government_official' ? 'GovernmentStartupList' : 'StartupList',
+        show: hasPermission('view_startups') || hasPermission('submit_startup') || userProfile?.role === 'government_official'
       },
       {
         name: 'Events',
