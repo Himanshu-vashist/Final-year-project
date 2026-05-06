@@ -124,14 +124,26 @@ export default function DashboardScreen({ navigation }) {
     }
   };
 
-  const loadRecent = async (col, opts = {}) => {
+  const loadRecent = async (col) => {
     try {
-      const { roleRestrictField } = opts;
-      let q;
-      // simple default: public latest 5
-      q = query(collection(db, col), where('isPublic', '==', true), orderBy('createdAt', 'desc'), limit(5));
-      const snapshot = await getDocs(q);
-      return snapshot.docs.map((d) => ({ id: d.id, ...d.data() }));
+      let publicQ = query(collection(db, col), where('isPublic', '==', true), orderBy('createdAt', 'desc'), limit(5));
+      let userQ = userProfile?.uid 
+        ? query(collection(db, col), where('userId', '==', userProfile.uid), orderBy('createdAt', 'desc'), limit(5))
+        : null;
+
+      const [publicSnap, userSnap] = await Promise.all([
+        getDocs(publicQ),
+        userQ ? getDocs(userQ) : Promise.resolve({ docs: [] })
+      ]);
+
+      const combined = [
+        ...publicSnap.docs.map(d => ({ id: d.id, ...d.data() })),
+        ...userSnap.docs.map(d => ({ id: d.id, ...d.data() }))
+      ];
+
+      // De-duplicate and sort
+      const unique = Array.from(new Map(combined.map(item => [item.id, item])).values());
+      return unique.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt)).slice(0, 5);
     } catch (e) {
       console.warn('loadRecent error', col, e);
       return [];
@@ -287,7 +299,7 @@ export default function DashboardScreen({ navigation }) {
       <Animated.ScrollView
         style={{ flex: 1 }}
         contentContainerStyle={{ paddingBottom: 80 }}
-        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#fff" colors={['#b366ff']} />}
         showsVerticalScrollIndicator={false}
         scrollEventThrottle={16}
         onContentSizeChange={(w, h) => setContentHeight(h)}
@@ -311,7 +323,7 @@ export default function DashboardScreen({ navigation }) {
               <Ionicons name="search" size={24} color="#fff" />
             </TouchableOpacity>
             <TouchableOpacity onPress={() => navigation.navigate('Profile')}>
-              <Avatar.Text size={54} label={(userProfile?.name || 'U').charAt(0)} style={styles.avatar} />
+              <Avatar.Text size={54} label={(userProfile?.name || 'U').charAt(0)} style={styles.avatar} labelStyle={{ color: '#fff' }} />
             </TouchableOpacity>
           </View>
         </View>

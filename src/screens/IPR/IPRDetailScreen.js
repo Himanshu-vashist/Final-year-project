@@ -98,8 +98,10 @@ export default function IPRDetailScreen({ route, navigation }) {
 
   const handleStatusUpdate = async (newStatus) => {
     try {
+      const isGranting = newStatus === 'granted';
       await updateDoc(doc(db, 'ipr', iprId), {
         status: newStatus,
+        isVerified: isGranting ? true : (ipr.isVerified || false),
         updatedAt: new Date().toISOString()
       });
 

@@ -30,6 +30,7 @@ import DashboardScreen from '../screens/DashboardScreen';
 import ProfileScreen from '../screens/ProfileScreen';
 import StartupNewsScreen from '../screens/StartupNewsScreen';
 import UnifiedAnnouncements from '../screens/UnifiedAnnouncements';
+import PendingVerificationScreen from '../screens/PendingVerificationScreen';
 
 // Search
 import GlobalSearchScreen from '../screens/Search/GlobalSearchScreen';
@@ -172,7 +173,7 @@ function EventStack() {
    Main tab navigator (fixed)
    ---------------------- */
 function MainTabs() {
-  const { userProfile, hasPermission } = useAuth();
+  const { userProfile, hasPermission, isRole, USER_ROLES } = useAuth();
   const { theme, isDarkMode } = useTheme();
   const { width } = useWindowDimensions();
   const isDesktop = width >= 1024;
@@ -244,50 +245,65 @@ function MainTabs() {
     label: 'Events',
   });
 
-  // Local Business Data
-  tabScreens.push({
-    name: 'LocalBusinessData',
-    component: LocalBusinessDataScreen,
-    icon: 'business',
-    label: 'Businesses',
-  });
+  // Local Business Data - mostly for researchers/entrepreneurs
+  if (isRole(USER_ROLES.RESEARCHER) || isRole(USER_ROLES.ENTREPRENEUR) || isRole(USER_ROLES.ADMIN)) {
+    tabScreens.push({
+      name: 'LocalBusinessData',
+      component: LocalBusinessDataScreen,
+      icon: 'business',
+      label: 'Businesses',
+    });
+  }
 
-  // Funding related tabs (appear for most users)
-  tabScreens.push({
-    name: 'Funding',
-    component: FundingScreen,
-    icon: 'cash',
-    label: 'Funding',
-  });
-  tabScreens.push({
-    name: 'FundingOpportunities',
-    component: FundingOpportunitiesScreen,
-    icon: 'gift',
-    label: 'Opportunities',
-  });
-  tabScreens.push({
-    name: 'FundingTracker',
-    component: FundingApplicationTrackerScreen,
-    icon: 'clipboard',
-    label: 'Tracker',
-  });
+  // Funding related tabs
+  if (hasPermission('apply_for_funding') || hasPermission('manage_funding')) {
+    tabScreens.push({
+      name: 'Funding',
+      component: FundingScreen,
+      icon: 'cash',
+      label: 'Funding',
+    });
+  }
+
+  if (isRole(USER_ROLES.ENTREPRENEUR) || isRole(USER_ROLES.RESEARCHER) || isRole(USER_ROLES.INVESTOR)) {
+    tabScreens.push({
+      name: 'FundingOpportunities',
+      component: FundingOpportunitiesScreen,
+      icon: 'gift',
+      label: 'Opportunities',
+    });
+  }
+
+  if (isRole(USER_ROLES.ENTREPRENEUR) || isRole(USER_ROLES.RESEARCHER)) {
+    tabScreens.push({
+      name: 'FundingTracker',
+      component: FundingApplicationTrackerScreen,
+      icon: 'clipboard',
+      label: 'Tracker',
+    });
+  }
+
+  if (isRole(USER_ROLES.ENTREPRENEUR)) {
+    tabScreens.push({
+      name: 'LinkedInJobs',
+      component: LinkedInJobsScreen,
+      icon: 'logo-linkedin',
+      label: 'LinkedIn Jobs',
+    });
+  }
+
   tabScreens.push({
     name: 'StartupNews',
     component: StartupNewsScreen,
     icon: 'newspaper',
     label: 'Startup News',
   });
+
   tabScreens.push({
     name: 'Announcements',
     component: UnifiedAnnouncements,
     icon: 'megaphone',
     label: 'Announcements',
-  });
-  tabScreens.push({
-    name: 'LinkedInJobs',
-    component: LinkedInJobsScreen,
-    icon: 'logo-linkedin',
-    label: 'LinkedIn Jobs',
   });
 
   // If desktop we might hide tab bar
@@ -320,6 +336,7 @@ function MainTabs() {
    Main Drawer (mobile) and Desktop stack wrapper
    ---------------------- */
 function MainDrawer() {
+  const { userProfile } = useAuth();
   const { theme } = useTheme();
   const { width } = useWindowDimensions();
   const isDesktop = width >= 1024;
@@ -452,22 +469,26 @@ function MainDrawer() {
           drawerLabel: 'Funding',
         }}
       />
-      <Drawer.Screen
-        name="FundingOpportunities"
-        component={FundingOpportunitiesScreen}
-        options={{
-          drawerIcon: ({ color }) => <Ionicons name="gift" size={22} color={color} />,
-          drawerLabel: 'Opportunities',
-        }}
-      />
-      <Drawer.Screen
-        name="FundingTracker"
-        component={FundingApplicationTrackerScreen}
-        options={{
-          drawerIcon: ({ color }) => <Ionicons name="clipboard" size={22} color={color} />,
-          drawerLabel: 'Tracker',
-        }}
-      />
+      {userProfile?.role !== 'government_official' && (
+        <>
+          <Drawer.Screen
+            name="FundingOpportunities"
+            component={FundingOpportunitiesScreen}
+            options={{
+              drawerIcon: ({ color }) => <Ionicons name="gift" size={22} color={color} />,
+              drawerLabel: 'Opportunities',
+            }}
+          />
+          <Drawer.Screen
+            name="FundingTracker"
+            component={FundingApplicationTrackerScreen}
+            options={{
+              drawerIcon: ({ color }) => <Ionicons name="clipboard" size={22} color={color} />,
+              drawerLabel: 'Tracker',
+            }}
+          />
+        </>
+      )}
       <Drawer.Screen
         name="StartupNews"
         component={StartupNewsScreen}
@@ -492,14 +513,16 @@ function MainDrawer() {
           drawerLabel: 'Events',
         }}
       />
-      <Drawer.Screen
-        name="LocalBusinessData"
-        component={LocalBusinessDataScreen}
-        options={{
-          drawerIcon: ({ color }) => <Ionicons name="business" size={22} color={color} />,
-          drawerLabel: 'Businesses',
-        }}
-      />
+      {userProfile?.role !== 'government_official' && (
+        <Drawer.Screen
+          name="LocalBusinessData"
+          component={LocalBusinessDataScreen}
+          options={{
+            drawerIcon: ({ color }) => <Ionicons name="business" size={22} color={color} />,
+            drawerLabel: 'Businesses',
+          }}
+        />
+      )}
       <Drawer.Screen
         name="Chatbot"
         component={ChatbotScreen}
@@ -508,14 +531,16 @@ function MainDrawer() {
           drawerLabel: 'AI Assistant',
         }}
       />
-      <Drawer.Screen
-        name="LinkedInJobs"
-        component={LinkedInJobsScreen}
-        options={{
-          drawerIcon: ({ color }) => <Ionicons name="logo-linkedin" size={22} color={color} />,
-          drawerLabel: 'LinkedIn Jobs',
-        }}
-      />
+      {userProfile?.role !== 'government_official' && (
+        <Drawer.Screen
+          name="LinkedInJobs"
+          component={LinkedInJobsScreen}
+          options={{
+            drawerIcon: ({ color }) => <Ionicons name="logo-linkedin" size={22} color={color} />,
+            drawerLabel: 'LinkedIn Jobs',
+          }}
+        />
+      )}
       <Drawer.Screen
         name="Profile"
         component={ProfileScreen}
@@ -531,7 +556,7 @@ function MainDrawer() {
    Root navigator
    ---------------------- */
 function RootNavigator() {
-  const { currentUser, loading } = useAuth();
+  const { currentUser, userProfile, loading } = useAuth();
   const { theme, isDarkMode, isLoading: themeLoading } = useTheme();
 
   if (loading || themeLoading || !theme) {
@@ -558,7 +583,16 @@ function RootNavigator() {
 
   return (
     <NavigationContainer theme={navigationTheme}>
-      {currentUser ? <MainDrawer /> : <AuthStack />}
+      {currentUser ? (
+        userProfile?.verified || 
+        ['government_official', 'admin', 'entrepreneur', 'researcher', 'investor'].includes(userProfile?.role) ? (
+          <MainDrawer />
+        ) : (
+          <PendingVerificationScreen />
+        )
+      ) : (
+        <AuthStack />
+      )}
     </NavigationContainer>
   );
 }

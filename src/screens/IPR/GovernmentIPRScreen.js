@@ -66,8 +66,8 @@ export default function GovernmentIPRScreen({ navigation }) {
   // Fetch IPR applications
   const fetchApplications = async () => {
     try {
-      const iprRef = collection(db, 'ipr_applications');
-      const q = query(iprRef, orderBy('filingDate', 'desc'));
+      const iprRef = collection(db, 'ipr');
+      const q = query(iprRef, orderBy('createdAt', 'desc'));
       const querySnapshot = await getDocs(q);
       
       const apps = [];
@@ -96,18 +96,19 @@ export default function GovernmentIPRScreen({ navigation }) {
     }
 
     try {
-      const applicationRef = doc(db, 'ipr_applications', selectedApplication.id);
+      const applicationRef = doc(db, 'ipr', selectedApplication.id);
       
       const statusUpdate = {
         status: newStatus,
         notes: statusNote,
-        timestamp: serverTimestamp(),
+        timestamp: new Date().toISOString(),
         updatedBy: userProfile.name || currentUser.email
       };
 
       await updateDoc(applicationRef, {
         status: newStatus,
-        lastUpdated: serverTimestamp(),
+        isVerified: newStatus === 'granted',
+        lastUpdated: new Date().toISOString(),
         statusUpdates: [...(selectedApplication.statusUpdates || []), statusUpdate]
       });
 
@@ -243,7 +244,7 @@ export default function GovernmentIPRScreen({ navigation }) {
           <View style={styles.metaItem}>
             <Ionicons name="calendar-outline" size={16} color="#666" />
             <Text style={styles.metaText}>
-              {moment(application.filingDate.toDate()).format('MMM DD, YYYY')}
+              {application.filingDate ? moment(application.filingDate).format('MMM DD, YYYY') : 'N/A'}
             </Text>
           </View>
         </View>

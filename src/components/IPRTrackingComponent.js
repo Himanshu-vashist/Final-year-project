@@ -73,7 +73,7 @@ export const IPRTrackingComponent = ({ application, isGovernmentView = false }) 
                   {IPR_STAGES[update.status]?.label}
                 </Chip>
                 <Text style={styles.updateDate}>
-                  {moment(update.timestamp.toDate()).format('MMM DD, YYYY')}
+                  {update.timestamp ? (update.timestamp.toDate ? moment(update.timestamp.toDate()).format('MMM DD, YYYY') : moment(update.timestamp).format('MMM DD, YYYY')) : 'N/A'}
                 </Text>
               </View>
               <Paragraph style={styles.updateNotes}>{update.notes}</Paragraph>
@@ -103,7 +103,7 @@ export const IPRTrackingComponent = ({ application, isGovernmentView = false }) 
             <View style={styles.detail}>
               <Ionicons name="calendar-outline" size={20} color="#757575" />
               <Text style={styles.detailText}>
-                Filed: {moment(application.filingDate.toDate()).format('MMM DD, YYYY')}
+                Filed: {application.filingDate ? (application.filingDate.toDate ? moment(application.filingDate.toDate()).format('MMM DD, YYYY') : moment(application.filingDate).format('MMM DD, YYYY')) : 'N/A'}
               </Text>
             </View>
           </View>

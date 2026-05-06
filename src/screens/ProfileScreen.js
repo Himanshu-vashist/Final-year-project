@@ -126,6 +126,7 @@ export default function ProfileScreen({ navigation }) {
                 size={80} 
                 label={userProfile?.name?.charAt(0) || 'U'} 
                 style={styles.avatar}
+                labelStyle={{ color: '#fff' }}
               />
               <View style={styles.cameraIcon}>
                 <Ionicons name="camera" size={16} color="#fff" />
@@ -168,10 +169,17 @@ export default function ProfileScreen({ navigation }) {
               mode="flat"
               style={styles.input}
               editable={editing}
-              left={<TextInput.Icon icon="account" color="#b366ff" />}
+              left={<TextInput.Icon icon="account" iconColor="#b366ff" />}
               underlineColor="transparent"
               activeUnderlineColor="transparent"
-              theme={{ colors: { primary: '#b366ff', text: '#fff', placeholder: '#999' } }}
+              theme={{ 
+                colors: { 
+                  primary: '#b366ff', 
+                  onSurface: '#fff', 
+                  onSurfaceVariant: '#aaa',
+                  surfaceVariant: 'rgba(255,255,255,0.05)'
+                } 
+              }}
               textColor="#fff"
             />
 
@@ -181,10 +189,17 @@ export default function ProfileScreen({ navigation }) {
               mode="flat"
               style={styles.input}
               editable={false}
-              left={<TextInput.Icon icon="email" color="#b366ff" />}
+              left={<TextInput.Icon icon="email" iconColor="#b366ff" />}
               underlineColor="transparent"
               activeUnderlineColor="transparent"
-              theme={{ colors: { primary: '#b366ff', text: '#fff', placeholder: '#999' } }}
+              theme={{ 
+                colors: { 
+                  primary: '#b366ff', 
+                  onSurface: '#fff', 
+                  onSurfaceVariant: '#aaa',
+                  surfaceVariant: 'rgba(255,255,255,0.05)'
+                } 
+              }}
               textColor="#fff"
             />
 
@@ -195,10 +210,17 @@ export default function ProfileScreen({ navigation }) {
               mode="flat"
               style={styles.input}
               editable={editing}
-              left={<TextInput.Icon icon="office-building" color="#b366ff" />}
+              left={<TextInput.Icon icon="office-building" iconColor="#b366ff" />}
               underlineColor="transparent"
               activeUnderlineColor="transparent"
-              theme={{ colors: { primary: '#b366ff', text: '#fff', placeholder: '#999' } }}
+              theme={{ 
+                colors: { 
+                  primary: '#b366ff', 
+                  onSurface: '#fff', 
+                  onSurfaceVariant: '#aaa',
+                  surfaceVariant: 'rgba(255,255,255,0.05)'
+                } 
+              }}
               textColor="#fff"
             />
 
@@ -209,10 +231,17 @@ export default function ProfileScreen({ navigation }) {
               mode="flat"
               style={styles.input}
               editable={editing}
-              left={<TextInput.Icon icon="badge-account" color="#b366ff" />}
+              left={<TextInput.Icon icon="badge-account" iconColor="#b366ff" />}
               underlineColor="transparent"
               activeUnderlineColor="transparent"
-              theme={{ colors: { primary: '#b366ff', text: '#fff', placeholder: '#999' } }}
+              theme={{ 
+                colors: { 
+                  primary: '#b366ff', 
+                  onSurface: '#fff', 
+                  onSurfaceVariant: '#aaa',
+                  surfaceVariant: 'rgba(255,255,255,0.05)'
+                } 
+              }}
               textColor="#fff"
             />
 
@@ -224,10 +253,17 @@ export default function ProfileScreen({ navigation }) {
               style={styles.input}
               editable={editing}
               keyboardType="phone-pad"
-              left={<TextInput.Icon icon="phone" color="#b366ff" />}
+              left={<TextInput.Icon icon="phone" iconColor="#b366ff" />}
               underlineColor="transparent"
               activeUnderlineColor="transparent"
-              theme={{ colors: { primary: '#b366ff', text: '#fff', placeholder: '#999' } }}
+              theme={{ 
+                colors: { 
+                  primary: '#b366ff', 
+                  onSurface: '#fff', 
+                  onSurfaceVariant: '#aaa',
+                  surfaceVariant: 'rgba(255,255,255,0.05)'
+                } 
+              }}
               textColor="#fff"
             />
 
@@ -240,10 +276,17 @@ export default function ProfileScreen({ navigation }) {
               editable={editing}
               multiline
               numberOfLines={3}
-              left={<TextInput.Icon icon="text" color="#b366ff" />}
+              left={<TextInput.Icon icon="text" iconColor="#b366ff" />}
               underlineColor="transparent"
               activeUnderlineColor="transparent"
-              theme={{ colors: { primary: '#b366ff', text: '#fff', placeholder: '#999' } }}
+              theme={{ 
+                colors: { 
+                  primary: '#b366ff', 
+                  onSurface: '#fff', 
+                  onSurfaceVariant: '#aaa',
+                  surfaceVariant: 'rgba(255,255,255,0.05)'
+                } 
+              }}
               textColor="#fff"
             />
           </View>
@@ -262,10 +305,17 @@ export default function ProfileScreen({ navigation }) {
               mode="flat"
               style={styles.input}
               editable={editing}
-              left={<TextInput.Icon icon="web" color="#b366ff" />}
+              left={<TextInput.Icon icon="web" iconColor="#b366ff" />}
               underlineColor="transparent"
               activeUnderlineColor="transparent"
-              theme={{ colors: { primary: '#b366ff', text: '#fff', placeholder: '#999' } }}
+              theme={{ 
+                colors: { 
+                  primary: '#b366ff', 
+                  onSurface: '#fff', 
+                  onSurfaceVariant: '#aaa',
+                  surfaceVariant: 'rgba(255,255,255,0.05)'
+                } 
+              }}
               textColor="#fff"
             />
 
@@ -276,69 +326,28 @@ export default function ProfileScreen({ navigation }) {
               mode="flat"
               style={styles.input}
               editable={editing}
-              left={<TextInput.Icon icon="linkedin" color="#b366ff" />}
+              left={<TextInput.Icon icon="linkedin" iconColor="#b366ff" />}
               underlineColor="transparent"
               activeUnderlineColor="transparent"
-              theme={{ colors: { primary: '#b366ff', text: '#fff', placeholder: '#999' } }}
+              theme={{ 
+                colors: { 
+                  primary: '#b366ff', 
+                  onSurface: '#fff', 
+                  onSurfaceVariant: '#aaa',
+                  surfaceVariant: 'rgba(255,255,255,0.05)'
+                } 
+              }}
               textColor="#fff"
             />
           </View>
 
-          {/* Settings */}
-          <View style={styles.card}>
+          {/* Preferences Placeholder */}
+          {/* <View style={styles.card}>
             <View style={styles.cardHeader}>
               <Ionicons name="settings-outline" size={20} color="#b366ff" />
-              <Text style={styles.cardTitle}>Settings</Text>
+              <Text style={styles.cardTitle}>Preferences</Text>
             </View>
-            
-            <View style={styles.settingRow}>
-              <View style={styles.settingInfo}>
-                <Text style={styles.settingLabel}>Dark Mode</Text>
-                <Text style={styles.settingDescription}>
-                  Enable blue dark theme throughout the app
-                </Text>
-              </View>
-              <Switch
-                value={isDarkMode}
-                onValueChange={toggleTheme}
-                color="#b366ff"
-              />
-            </View>
-
-            <View style={styles.dividerLine} />
-
-            <View style={styles.settingRow}>
-              <View style={styles.settingInfo}>
-                <Text style={styles.settingLabel}>Enable Notifications</Text>
-                <Text style={styles.settingDescription}>
-                  Receive updates about your applications and opportunities
-                </Text>
-              </View>
-              <Switch
-                value={formData.notificationsEnabled}
-                onValueChange={(value) => updateFormData('notificationsEnabled', value)}
-                disabled={!editing}
-                color="#b366ff"
-              />
-            </View>
-
-            <View style={styles.dividerLine} />
-
-            <View style={styles.settingRow}>
-              <View style={styles.settingInfo}>
-                <Text style={styles.settingLabel}>Public Profile</Text>
-                <Text style={styles.settingDescription}>
-                  Make your profile visible to other users
-                </Text>
-              </View>
-              <Switch
-                value={formData.publicProfile}
-                onValueChange={(value) => updateFormData('publicProfile', value)}
-                disabled={!editing}
-                color="#b366ff"
-              />
-            </View>
-          </View>
+          </View> */}
 
           {/* Account Statistics */}
           <View style={styles.card}>

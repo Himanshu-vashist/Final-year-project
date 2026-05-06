@@ -8,7 +8,7 @@
 
 import React, { useEffect, useState, useMemo } from 'react';
 import { View, FlatList, RefreshControl, Linking, StyleSheet } from 'react-native';
-import { Card, Title, Paragraph, Button, Searchbar, Chip, ActivityIndicator, Text } from 'react-native-paper';
+import { Card, Title, Paragraph, Button, Searchbar, Chip, ActivityIndicator, Text, Surface } from 'react-native-paper';
 
 // ---------- Helper utilities ----------
 const isoNow = () => new Date().toISOString();
@@ -211,7 +211,15 @@ export default function EventCalendar({
 
   return (
     <View style={[styles.container, style]}>
-      <Searchbar placeholder="Search events, descriptions, location..." value={query} onChangeText={setQuery} style={styles.search} />
+      <Searchbar 
+        placeholder="Search events, descriptions, location..." 
+        value={query} 
+        onChangeText={setQuery} 
+        style={styles.search}
+        iconColor="#666"
+        placeholderTextColor="#999"
+        inputStyle={{ color: '#333' }}
+      />
 
       <View style={styles.pillsRow}>
         <Chip onPress={() => setActiveTag(null)} selected={!activeTag} style={styles.chip}>All</Chip>
@@ -233,7 +241,7 @@ export default function EventCalendar({
           keyExtractor={(i) => i.id}
           renderItem={renderEvent}
           refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
-          ListEmptyComponent={<View style={{ padding: 20 }}><Text>No upcoming events found.</Text></View>}
+          ListEmptyComponent={<View style={{ padding: 20 }}><Text style={{ color: '#fff', textAlign: 'center' }}>No upcoming events found.</Text></View>}
           contentContainerStyle={{ paddingBottom: 100 }}
         />
       )}
